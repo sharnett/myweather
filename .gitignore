@@ -1,0 +1,6 @@
+*.pyc
+*/*.pyc
+*.swp
+.DS_Store
+*/.DS_Store
+key.txt

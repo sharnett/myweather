@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+            google.load("visualization", "1", {packages:["corechart"]});
+            google.setOnLoadCallback(drawChart);
+            function drawChart() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('datetime', 'Time');
+                data.addColumn('number', 'Temperature');
+                data.addColumn('number', 'Feels like');
+                data.addColumn('number', 'Precipitation %');
+                data.addRows([
+                        {{ data_string }}
+                        ]);
+
+                var options = {
+                    hAxis: {format: 'E ha'},
+                    legend: {position: 'top'},
+                    series: {2:{targetAxisIndex:1}},
+                    vAxes: [{format: "### F"}, {format: "###'%'", minValue: 0, maxValue:100}]
+                };
+
+                var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+                var formatter_short = new google.visualization.DateFormat({formatType: 'short'});
+                formatter_short.format(data, 0);
+                chart.draw(data, options);
+            }
+</script>
+  </head>
+  <body>
+      <h1>Enter your shit</h1>
+
+      <form action="" method="GET">
+          Zip code: <input type="text" name="zip_code" /> <br />
+          Number of hours: <input type="text" name="num_hours" /> <br />
+          <input type="submit" />
+      </form>
+      <div id="chart_div"></div>
+  </body>
+</html>
