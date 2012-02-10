@@ -1,9 +1,5 @@
-from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from get_json import *
-
-def home(request):
-    return HttpResponse("Hi there.")
 
 def WeatherView(request):
     ds = ''
