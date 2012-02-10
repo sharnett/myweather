@@ -30,12 +30,23 @@
 </script>
   </head>
   <body>
-      <h1>Welcome to weatherland</h1>
+      <h1>Welcome to WeatherLand&trade;</h1>
       <form action="" method="GET">
-          Zip code: <input type="text" name="zip_code" /> <br />
-          Number of hours: <input type="text" name="num_hours" /> <br />
-          <input type="submit" />
+          <table>
+              <tr>
+                  <td>Zip code:</td>
+                  <td> <input type="text" size=5 name="zip_code" /> </td>
+                  <td></td>
+              </tr>
+              <tr>
+                  <td> # hours to display: </td>
+                  <td> <input type="text" size=3 name="num_hours" /> </td>
+                  <td> <input type="submit" value="GIMME WEATHER" /> </td>
+              </tr>
+              </tr>
+          </table>
       </form>
-      <div id="chart_div"></div>
+      <center><h4> {{ num_hours }} hour forecast for zip code {{ zip_code }} </h4></center>
+      <div id="chart_div"> </div>
   </body>
 </html>
