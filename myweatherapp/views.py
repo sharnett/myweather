@@ -9,7 +9,7 @@ def WeatherView(request):
     else:
         zip_code = int(params['zip_code']) 
     if not params or not params['num_hours']:
-        num_hours = 8
+        num_hours = 12
     else:
         num_hours = int(params['num_hours'])
     w = weather_for_zip(zip_code)
