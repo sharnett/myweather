@@ -23,8 +23,12 @@
                 };
 
                 var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-                var formatter_short = new google.visualization.DateFormat({formatType: 'short'});
-                formatter_short.format(data, 0);
+                var formatter_date = new google.visualization.DateFormat({formatType: 'short'});
+                formatter_date.format(data, 0);
+                var formatter_num = new google.visualization.NumberFormat({fractionDigits: 0});
+                formatter_num.format(data, 1);
+                formatter_num.format(data, 2);
+                formatter_num.format(data, 3);
                 chart.draw(data, options);
             }
 </script>
