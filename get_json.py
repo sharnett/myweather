@@ -1,7 +1,7 @@
 from urllib2 import urlopen
 from json import load
 
-KEY = open('/Users/srharnett/Dropbox/hacking/myweather/key.txt', 'r').read().strip()
+KEY = open('/home/sean/myweather/key.txt', 'r').read().strip()
 feature = 'hourly7day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 

@@ -39,7 +39,7 @@ function weather() {
     icons.type = "line";
     icons.valueAxis = popAxis;
     icons.valueField = "icon_pos";
-    icons.bulletSize = 42; 
+    icons.bulletSize = 21; 
     icons.customBulletField = "icon"; 
     icons.lineThickness = 0;
     icons.visibleInLegend = false;
@@ -84,7 +84,7 @@ function weather() {
 
     // LEGEND
     var legend = new AmCharts.AmLegend();
-    legend.position = "top";
+    legend.position = "bottom";
     chart.addLegend(legend);
 
     // WRITE

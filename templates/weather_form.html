@@ -1,6 +1,7 @@
 <html>
     <head>
         <title> Sean weather </title>
+        <meta name="viewport" content="width=450">
         <script src="static/amcharts.js" type="text/javascript"></script>
         <script src="static/raphael.js" type="text/javascript"></script>
         <script src="static/weather.js" type="text/javascript"></script>
@@ -10,11 +11,16 @@
             var zip_code = {{ zip_code }};
             AmCharts.ready(weather);
         </script>
-
+        <style type="text/css">
+            #chart_div {
+                width:100%;
+                height:300px;
+            }
+        </style>
   </head>
   <body>
-      <h1>Welcome to SeanWeather&trade;</h1>
-      <div id="chart_div" style="width:100%; height:400px;"> </div>
+      <h3>Welcome to SeanWeather&trade;</h3>
+      <div id="chart_div"> </div>
       <form action="" method="GET">
           <table>
               <tr>
