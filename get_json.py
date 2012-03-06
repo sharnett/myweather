@@ -5,6 +5,10 @@ KEY = open('/home/sean/myweather/key.txt', 'r').read().strip()
 feature = 'hourly7day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 
+def geolookup(zip_code):
+    url = url_base % (KEY, 'geolookup', zip_code)
+    return load(urlopen(url))['location']['city']
+
 def weather_for_zip(zip_code):
     url = url_base % (KEY, feature, zip_code)
     return load(urlopen(url))

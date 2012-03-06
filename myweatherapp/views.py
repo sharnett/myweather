@@ -17,10 +17,11 @@ def WeatherView(request):
             num_hours = 12
     else:
         num_hours = int(params['num_hours'])
+    city = geolookup(zip_code)
     w = weather_for_zip(zip_code)
     ds = get_shit_i_care_about(w, num_hours)
     response = render_to_response('weather_form.html', \
-            {'data_string': ds, 'zip_code': zip_code, 'num_hours': num_hours})
+            {'data_string': ds, 'city': city, 'zip_code': zip_code, 'num_hours': num_hours})
     response.set_cookie('zip_code', zip_code, max_age=365*24*68*68)
     response.set_cookie('num_hours', num_hours, max_age=365*24*68*68)
     return response
