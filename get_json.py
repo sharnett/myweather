@@ -1,8 +1,11 @@
 from urllib2 import urlopen
-from json import load
+from json import load, dump
+from os.path import dirname, abspath, getmtime, exists
+from time import time
 
-KEY = open('/home/sean/myweather/key.txt', 'r').read().strip()
-feature = 'hourly7day'
+directory = dirname(abspath(__file__))
+KEY = open(directory + '/key.txt', 'r').read().strip()
+feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 
 def geolookup(zip_code):
@@ -13,8 +16,14 @@ def geolookup(zip_code):
         return str(zip_code)
 
 def weather_for_zip(zip_code):
-    url = url_base % (KEY, feature, zip_code)
-    return load(urlopen(url))
+    cache_file = dirname(abspath(__file__)) + '/cache/' + str(zip_code) + '.json'
+    if exists(cache_file) and (time() - getmtime(cache_file))/60 < 45:
+        data = load(open(cache_file))
+    else:
+        url = url_base % (KEY, feature, zip_code)
+        data = load(urlopen(url))
+        dump(data, open(cache_file, 'w')) 
+    return data
 
 def get_shit_i_care_about(w, num_hours):
     if not 'hourly_forecast' in w or not w['hourly_forecast']:

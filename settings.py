@@ -1,4 +1,6 @@
 # Django settings for myweather project.
+from os.path import dirname, abspath
+directory = dirname(abspath(__file__))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -56,7 +58,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = '/home/sean/myweather/static/'
+STATIC_ROOT = directory + '/static/'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -103,7 +105,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'myweather.urls'
 
 TEMPLATE_DIRS = (
-    "/home/sean/myweather/templates/",
+    directory + "/templates/",
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
