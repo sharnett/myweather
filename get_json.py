@@ -9,8 +9,8 @@ feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 
 def geolookup(zip_code):
-    cache_file = open(dirname(abspath(__file__)) + '/cache/zipcodes.json', 'r+')
-    cache = load(cache_file)
+    cache_file = dirname(abspath(__file__)) + '/cache/zipcodes.json'
+    cache = load(open(cache_file))
     if zip_code in cache:
         city = cache[zip_code]
     else:
@@ -18,13 +18,13 @@ def geolookup(zip_code):
             url = url_base % (KEY, 'geolookup', zip_code)
             city = load(urlopen(url))['location']['city']
         except:
-            city = str(zip_code)
+            city = zip_code
         cache[zip_code] = city 
-        dump(cache, cache_file)
+        dump(cache, open(cache_file, 'w'))
     return city
 
 def weather_for_zip(zip_code):
-    cache_file = dirname(abspath(__file__)) + '/cache/' + str(zip_code) + '.json'
+    cache_file = dirname(abspath(__file__)) + '/cache/' + zip_code + '.json'
     if exists(cache_file) and (time() - getmtime(cache_file))/60 < 45:
         data = load(open(cache_file))
     else:
@@ -50,7 +50,7 @@ def get_shit_i_care_about(w, num_hours):
     return "[" + ",\n".join(rows) + "]"
         
 if __name__ == "__main__":
-    zip_code = 10025
+    zip_code = '10025'
     w = weather_for_zip(zip_code)
     print get_shit_i_care_about(w,10)
     print geolookup(zip_code)
