@@ -2,9 +2,14 @@
     <head>
         <title> Sean weather </title>
         <meta name="viewport" content="width=450">
-        <script src="static/amcharts.js" type="text/javascript"></script>
-        <script src="static/raphael.js" type="text/javascript"></script>
-        <script src="static/weather.js" type="text/javascript"></script>
+	<link rel="shortcut icon" href="/static/favicon.ico" />
+        <link rel="apple-touch-icon-precomposed" sizes="57x57" href="/static/apple-touch-icon-57x57-precomposed.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/static/apple-touch-icon-72x72-precomposed.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/apple-touch-icon-114x114-precomposed.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/apple-touch-icon-144x144-precomposed.png" />
+        <script src="/static/amcharts.js" type="text/javascript"></script>
+        <script src="/static/raphael.js" type="text/javascript"></script>
+        <script src="/static/weather.js" type="text/javascript"></script>
         <script type="text/javascript">
             var lineChartData = {{ data_string|safe }};
             var num_hours = {{ num_hours }};

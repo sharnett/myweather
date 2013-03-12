@@ -1,5 +1,9 @@
 from django.shortcuts import render_to_response
+from django.views.generic import TemplateView
 from get_json import *
+
+class LunchView(TemplateView):
+    template_name = "lunch.html"
 
 def WeatherView(request):
     params = dict((k, v) for k, v in request.GET.iteritems())
