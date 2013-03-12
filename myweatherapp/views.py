@@ -9,11 +9,11 @@ def WeatherView(request):
     params = dict((k, v) for k, v in request.GET.iteritems())
     if not params or not params['zip_code']:
         if request.COOKIES.has_key('zip_code'):
-            zip_code = int(request.COOKIES['zip_code'])
+            zip_code = request.COOKIES['zip_code']
         else:
-            zip_code = 10025
+            zip_code = '10025'
     else:
-        zip_code = int(params['zip_code']) 
+        zip_code = params['zip_code']
     if not params or not params['num_hours']:
         if request.COOKIES.has_key('num_hours'):
             num_hours = int(request.COOKIES['num_hours'])

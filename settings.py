@@ -1,4 +1,6 @@
 # Django settings for myweather project.
+from os.path import dirname, abspath
+directory = dirname(abspath(__file__))
 
 DEBUG = False
 TEMPLATE_DEBUG = False
@@ -103,6 +105,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'myweather.urls'
 
 TEMPLATE_DIRS = (
+<<<<<<< HEAD
     '/home/sean/myweather/templates'
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
