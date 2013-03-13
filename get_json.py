@@ -37,17 +37,16 @@ def weather_for_zip(zip_code):
 def get_shit_i_care_about(w, num_hours):
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
         return ''
-    rows = []
-    icon_pos = 100
-    for i,f in enumerate(w['hourly_forecast'][0:num_hours]):
+    def get_row(f):
+        icon_pos = 100
         icon = f['icon_url']
         time = int(f['FCTTIME']['epoch'])*1000  # date and time
         temp = f['temp']['english']             # temperature
         feels_like = f['feelslike']['english']  # temperature it feels like
-        pop = f['pop']                          # percentage chance precipitation
-        row = "{date: new Date(%d),\n icon: '%s', icon_pos: %s, temp: %s, pop: %s, feel: %s}" % \
+        pop = f['pop']                          # probability of precipitation
+        return "{date: new Date(%d),\n icon: '%s', icon_pos: %s, temp: %s, pop: %s, feel: %s}" % \
                 (time, icon, icon_pos, temp, pop, feels_like)
-        rows.append(row)
+    rows = [get_row(f) for f in w['hourly_forecast'][0:num_hours]]
     return "[" + ",\n".join(rows) + "]"
         
 if __name__ == "__main__":
