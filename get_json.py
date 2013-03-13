@@ -12,15 +12,16 @@ def geolookup(zip_code):
     cache_file = dirname(abspath(__file__)) + '/cache/zipcodes.json'
     cache = load(open(cache_file))
     if zip_code in cache:
-        city = cache[zip_code]
+        city = cache[zip_code]['city']
+        cache[zip_code]['count'] += 1
     else:
         try:
             url = url_base % (KEY, 'geolookup', zip_code)
             city = load(urlopen(url))['location']['city']
         except:
             city = zip_code
-        cache[zip_code] = city 
-        dump(cache, open(cache_file, 'w'))
+        cache[zip_code] = {'city': city, 'count': 1, 'time': time()}
+    dump(cache, open(cache_file, 'w'))
     return city
 
 def weather_for_zip(zip_code):
