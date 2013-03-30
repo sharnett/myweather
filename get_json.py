@@ -24,9 +24,9 @@ def geolookup(zip_code):
     dump(cache, open(cache_file, 'w'))
     return city
 
-def weather_for_zip(zip_code):
+def weather_for_zip(zip_code, check_cache=True):
     cache_file = dirname(abspath(__file__)) + '/cache/' + zip_code + '.json'
-    if exists(cache_file) and (time() - getmtime(cache_file))/60 < 45:
+    if check_cache and exists(cache_file) and (time() - getmtime(cache_file))/60 < 45:
         data = load(open(cache_file))
     else:
         url = url_base % (KEY, feature, zip_code)
