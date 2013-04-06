@@ -33,7 +33,8 @@ def geolookup(zip_code):
     return city
 
 def weather_for_zip(zip_code, check_cache=True):
-    increment_zipcode(zip_code)
+    if check_cache:
+        increment_zipcode(zip_code)
     cache_file = dirname(abspath(__file__)) + '/cache/' + zip_code + '.json'
     if check_cache and exists(cache_file) and (time() - getmtime(cache_file))/60 < 45:
         data = load(open(cache_file))
