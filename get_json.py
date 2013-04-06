@@ -8,23 +8,32 @@ KEY = open(directory + '/key.txt', 'r').read().strip()
 feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 
-def geolookup(zip_code):
-    cache_file = dirname(abspath(__file__)) + '/cache/zipcodes.json'
+def increment_zipcode(zip_code):
+    cache_file = dirname(abspath(__file__)) + '/cache/zipcode_counts.json'
     cache = load(open(cache_file))
     if zip_code in cache:
-        city = cache[zip_code]['city']
-        cache[zip_code]['count'] += 1
+        cache[zip_code] += 1
+    else:
+        cache[zip_code] = 1
+    dump(cache, open(cache_file, 'w'))
+
+def geolookup(zip_code):
+    cache_file = dirname(abspath(__file__)) + '/cache/geo_lookups.json'
+    cache = load(open(cache_file))
+    if zip_code in cache:
+        city = cache[zip_code]
     else:
         try:
             url = url_base % (KEY, 'geolookup', zip_code)
             city = load(urlopen(url))['location']['city']
         except:
             city = zip_code
-        cache[zip_code] = {'city': city, 'count': 1, 'time': time()}
-    dump(cache, open(cache_file, 'w'))
+        cache[zip_code] = city
+        dump(cache, open(cache_file, 'w'))
     return city
 
 def weather_for_zip(zip_code, check_cache=True):
+    increment_zipcode(zip_code)
     cache_file = dirname(abspath(__file__)) + '/cache/' + zip_code + '.json'
     if check_cache and exists(cache_file) and (time() - getmtime(cache_file))/60 < 45:
         data = load(open(cache_file))
