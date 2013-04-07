@@ -2,11 +2,22 @@ import flask
 from flask import render_template, request, session
 from get_json import *
 from re import match
+from traceback import format_exc
 
 app = flask.Flask(__name__)
-try: # production
+DEVELOPMENT = True
+try:
     SECRET_KEY = open('production.txt').read()
-except IOError: # development
+except:
+    DEVELOPMENT = False
+if DEVELOPMENT:
+    import logging
+    from TlsSMTPHandler import TlsSMTPHandler
+    from email_credentials import email_credentials
+    mail_handler = TlsSMTPHandler(*email_credentials())
+    mail_handler.setLevel(logging.ERROR)
+    app.logger.addHandler(mail_handler)
+else:
     SECRET_KEY = 'hi'
     app.debug = True
 app.config.from_object(__name__)

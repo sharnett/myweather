@@ -1,3 +1,5 @@
+email_credentials.py
+production.txt
 *.pyc
 */*.pyc
 *.swp
