@@ -5,12 +5,12 @@ from re import match
 from traceback import format_exc
 
 app = flask.Flask(__name__)
-DEVELOPMENT = True
+LIVE = True
 try:
     SECRET_KEY = open('production.txt').read()
 except:
-    DEVELOPMENT = False
-if DEVELOPMENT:
+    LIVE = False
+if LIVE:
     import logging
     from TlsSMTPHandler import TlsSMTPHandler
     from email_credentials import email_credentials
