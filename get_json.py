@@ -1,10 +1,11 @@
 from urllib2 import urlopen
 from json import load, dump
 from os.path import dirname, abspath, getmtime, exists
+from os import environ
 from time import time
 
 directory = dirname(abspath(__file__))
-KEY = open(directory + '/key.txt', 'r').read().strip()
+KEY = environ['WUNDERGROUND_KEY']
 feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 

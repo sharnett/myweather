@@ -3,23 +3,18 @@ from flask import render_template, request, session
 from get_json import *
 from re import match
 from traceback import format_exc
+from os import environ
 
 app = flask.Flask(__name__)
-LIVE = True
-try:
-    SECRET_KEY = open('production.txt').read()
-except:
-    LIVE = False
-if LIVE:
+SECRET_KEY = environ.get('SECRET_KEY', 'development')
+DEBUG = True if SECRET_KEY == 'development' else False
+if not DEBUG:
     import logging
     from TlsSMTPHandler import TlsSMTPHandler
     from email_credentials import email_credentials
     mail_handler = TlsSMTPHandler(*email_credentials())
     mail_handler.setLevel(logging.ERROR)
     app.logger.addHandler(mail_handler)
-else:
-    SECRET_KEY = 'hi'
-    app.debug = True
 app.config.from_object(__name__)
 
 def main():
