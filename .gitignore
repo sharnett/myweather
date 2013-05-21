@@ -1,9 +1,7 @@
 email_credentials.py
-production.txt
 *.pyc
 */*.pyc
 *.swp
 .DS_Store
 */.DS_Store
-key.txt
 cache/*

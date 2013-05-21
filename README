@@ -1,5 +1,5 @@
 1. get an API key from http://www.wunderground.com/weather/api/
-2. put it in a file called 'key.txt'
+2. put it in an environment variable called 'WUNDERGROUND_KEY'
 3. party on
 ----------------------------------------------------------------
 
