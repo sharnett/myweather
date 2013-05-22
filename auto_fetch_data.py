@@ -1,11 +1,20 @@
 #!/usr/bin/python
 from get_json import weather_for_zip
-from time import asctime
+from datetime import datetime
+from json import dumps
+from sqlite3 import connect
 from os.path import dirname, abspath
 
 if __name__ == '__main__':
+    directory = dirname(abspath(__file__))
+    conn = connect(directory + '/db.db')
+    c = conn.cursor()
     zipcodes = {'10025', '10027', '10010', '10016'}
     for z in zipcodes:
-        weather_for_zip(z, check_cache=False)
-    directory = dirname(abspath(__file__))
-    open(directory + '/timelog.txt', 'a').write(asctime()+'\n')
+        cache = dumps(weather_for_zip(z))
+        last_updated = datetime.now()
+        c.execute('update location set cache=?,last_updated=? where zipcode=?',
+                (cache, last_updated, z))
+        c.execute('insert into lookup values (null,?,?)', (last_updated, z))
+    conn.commit()
+    conn.close()
