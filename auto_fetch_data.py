@@ -15,6 +15,5 @@ if __name__ == '__main__':
         last_updated = datetime.now()
         c.execute('update location set cache=?,last_updated=? where zipcode=?',
                 (cache, last_updated, z))
-        c.execute('insert into lookup values (null,?,?)', (last_updated, z))
     conn.commit()
     conn.close()
