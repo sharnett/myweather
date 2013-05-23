@@ -26,3 +26,13 @@ class Lookup(db.Model):
         self.location = location
     def __repr__(self):
         return '<Lookup %r, %r>' % (self.zipcode, self.date)
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime)
+    text = db.Column(db.String)
+    def __init__(self, text):
+        self.date = datetime.now()
+        self.text = text
+    def __repr__(self):
+        return '<Comment %r, %r>' % (self.date, self.text)

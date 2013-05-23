@@ -4,7 +4,7 @@ from get_json import weather_for_zip, geolookup, limit
 from re import match
 from traceback import format_exc
 from os import environ
-from database import db, Location, Lookup
+from database import db, Location, Lookup, Comment
 from datetime import datetime
 from json import loads, dumps
 
@@ -51,6 +51,15 @@ def home():
     session['num_hours'] = num_hours
     return render_template('weather_form.html', data_string=ds, city=location.city, 
             zipcode=zipcode, num_hours=num_hours)
+
+@app.route('/comment', methods=['POST'])
+def comment():
+    text = request.form['comment']
+    if text:
+        db.session.add(Comment(text))
+        db.session.commit()
+        flask.flash('We appreciate your feedback! :)')
+    return flask.redirect(flask.url_for('home'))
 
 if __name__ == '__main__':
     main()
