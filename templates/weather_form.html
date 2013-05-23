@@ -8,6 +8,7 @@
         <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/static/apple-touch-icon-72x72-precomposed.png" />
         <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/apple-touch-icon-114x114-precomposed.png" />
         <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/apple-touch-icon-144x144-precomposed.png" />
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap.min.css') }}">
         <script src="/static/amcharts.js" type="text/javascript"></script>
         <script src="/static/raphael.js" type="text/javascript"></script>
         <script src="/static/weather.js" type="text/javascript"></script>
@@ -26,6 +27,9 @@
                 font-size: small;
                 color: grey;
             }
+            .form-horizontal .control-group {
+                margin-bottom: 5px;
+            }
         </style>
   </head>
   <body>
@@ -34,26 +38,31 @@
        {% endfor %}
       <h3>Welcome to SeanWeather&trade;</h3>
       <div id="chart_div"> </div>
-      <form action="" method="GET">
-          <table>
-              <tr>
-                  <td>Zip code:</td>
-                  <td> <input type="text" size=5 name="zipcode" value="{{ zipcode }}"/> </td>
-                  <td></td>
-              </tr>
-              <tr>
-                  <td> # hours to display: </td>
-                  <td> <input type="text" size=3 name="num_hours" value="{{ num_hours }}"/> </td>
-                  <td> <input type="submit" value="GIMME WEATHER" /> </td>
-              </tr>
-              </tr>
-          </table>
+      <form action="" method="GET" class="form-horizontal">
+          <div class="control-group">
+              <label class="control-label" for="input_zipcode">Zip code:</label>
+              <div class="controls"> 
+                  <input class="input-mini" type="text" size=5 id="input_zipcode" name="zipcode" value="{{ zipcode }}"> 
+              </div>
+          </div>
+          <div class="control-group">
+              <label class="control-label" for="input_num_hours"># hours to display: </label>
+              <div class="controls"> 
+                  <input class="input-mini" type="text" size=3 id="input_num_hours" name="num_hours" value="{{ num_hours }}"> 
+              </div>
+          </div>
+          <div class="control-group">
+              <div class="controls"> 
+                  <button type="submit" class="btn btn-mini"> GIMME WEATHER </button>
+              </div>
+          </div>
       </form>
     <hr>
-    <p> Suggestions and complaints: <br>
-    <textarea name="comment" form="comment_form"></textarea>
     <form action="/comment" id="comment_form" method="POST">
-        <input type="submit" value="Leave comment"/>
+        <label> Suggestions and complaints: </label>
+        <textarea name="comment" form="comment_form"></textarea>
+        <br>
+        <button type="submit" class="btn btn-mini"> Leave comment </button>
     </form>
    <!-- Google Analytics start -->
    <script type="text/javascript">
