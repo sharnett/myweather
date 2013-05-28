@@ -1,5 +1,7 @@
 #!/usr/bin/python
 import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
 from email_credentials import email_credentials
 from sqlite3 import connect
 from os.path import dirname, abspath
@@ -10,11 +12,12 @@ def send_mail(data):
     username, password = credentials
     subject = 'seanweather weekly report'
     body = 'Here are some interesting results, my good-looking friend:\n\n' + data
-    msg = 'subject: {}\n\n{}'.format(subject, body)
+    msg = MIMEText(body, _charset="UTF-8")
+    msg['Subject'] = Header(subject, "utf-8")
     server = smtplib.SMTP(mailhost)
     server.starttls()
     server.login(username, password)
-    server.sendmail(fromaddr, toaddrs, msg)
+    server.sendmail(fromaddr, toaddrs, msg.as_string())
     server.quit()
 
 def gather_data(cur):
@@ -24,7 +27,7 @@ def gather_data(cur):
     data += '\n\nComments\n'
     query = 'select date, text from comment'
     results = ((parse(date), text) for date, text in cur.execute(query))
-    data += '\n'.join('{:>12} -- {}'.format(date.strftime('%m/%d %H:%M'), text) for date, text in results)
+    data += u'\n'.join(u'{:>12} -- {}'.format(date.strftime('%m/%d %H:%M'), text) for date, text in results)
     return data
 
 def clean_up(cur):
