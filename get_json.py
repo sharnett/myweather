@@ -10,12 +10,21 @@ feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
 
 def geolookup(zip_code):
+    url = url_base % (KEY, 'geolookup', zip_code)
     try:
-        url = url_base % (KEY, 'geolookup', zip_code)
-        city = load(urlopen(url))['location']['city']
+        x = load(urlopen(url))['location']
     except:
-        city = zip_code
-    return city
+        return zip_code
+    try:
+        city = x['city']
+    except:
+        return zip_code
+    try:
+        state = x['state']
+    except:
+        print('boner')
+        return city
+    return city + ', ' + state
 
 def get_shit_i_care_about(w):
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
