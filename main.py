@@ -1,6 +1,6 @@
 import flask
 from flask import render_template, request, session
-from get_json import weather_for_zip, geolookup, limit
+from get_json import weather_for_zip, geolookup, limit, get_location
 from re import match
 from traceback import format_exc
 from os import environ
@@ -32,7 +32,9 @@ def home():
         zipcode = request.args.get('zipcode', prev_zip)
         assert(match(r'^\d{5}$', zipcode))
     except:
-        zipcode = '10027'
+        zipcode = get_location(zipcode)
+        if zipcode is None:
+            zipcode = '10027'
     try:
         num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
     except:
