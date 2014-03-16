@@ -62,7 +62,7 @@ def home():
     else:
         log.info('%s was in the cache, reusing geoinformation' % zipcode)
     log.info('%s is %s' % (zipcode, location.city))
-    if (datetime.now()-location.last_updated).seconds > 2700:
+    if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
         log.info('looking up the weather for %s' % zipcode)
         location.cache = dumps(weather_for_zip(zipcode))
         location.last_updated = datetime.now()
