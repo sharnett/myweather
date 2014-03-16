@@ -9,7 +9,7 @@ if __name__ == '__main__':
     directory = dirname(abspath(__file__))
     conn = connect(directory + '/db.db')
     c = conn.cursor()
-    zipcodes = {'10025', '10027', '10010', '10016'}
+    zipcodes = {'10025', '10027', '10010', '11211'}
     for z in zipcodes:
         cache = dumps(weather_for_zip(z))
         last_updated = datetime.now()
