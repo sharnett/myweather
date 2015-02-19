@@ -1,4 +1,4 @@
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 from json import load, dump
 from os.path import dirname, abspath, getmtime, exists
 from os import environ
@@ -50,7 +50,14 @@ def get_location(s):
 
 def weather_for_zip(zip_code):
     url = url_base % (KEY, feature, zip_code)
-    data = load(urlopen(url))
+    for i in range(3):
+        try:
+            data = load(urlopen(url))
+            break
+        except URLError:
+            sleep(i)
+    else:
+        raise URLError('urlopen timeout max retries')
     return get_shit_i_care_about(data)
 
 def limit(g, num_hours):

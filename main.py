@@ -87,5 +87,9 @@ def comment():
         flask.flash('We appreciate your feedback! :)')
     return flask.redirect(flask.url_for('home'))
 
+@app.route('/discuss')
+def discuss():
+    return render_template('discuss.html')
+
 if __name__ == '__main__':
     main()
