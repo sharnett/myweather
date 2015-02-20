@@ -2,7 +2,7 @@ from urllib2 import urlopen, URLError
 from json import load, dump
 from os.path import dirname, abspath, getmtime, exists
 from os import environ
-from time import time
+from time import time, sleep
 
 directory = dirname(abspath(__file__))
 KEY = environ['WUNDERGROUND_KEY']
