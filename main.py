@@ -74,6 +74,7 @@ def home():
     db.session.commit()
     session['zipcode'] = zipcode
     session['num_hours'] = num_hours
+    session.permanent = True
     log.info('FINISHED with %s' % zipcode)
     return render_template('weather_form.html', data_string=ds, city=location.city, 
             zipcode=zipcode, num_hours=num_hours)
