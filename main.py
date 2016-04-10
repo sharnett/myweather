@@ -2,7 +2,7 @@ import flask
 import logging
 import logging.handlers
 from flask import render_template, request, session
-from get_json import weather_for_zip, geolookup, limit, get_location
+from get_json import weather_for_zip, weather_for_url, geolookup, limit, parse_user_input
 from re import match
 from traceback import format_exc
 from os import environ
@@ -39,24 +39,29 @@ def main():
 def home():
     log.info('STARTING')
     prev_zip = session.get('zipcode', '10027')
+    location, parsed = None, False
     try:
         zipcode = request.args.get('zipcode', prev_zip)
         assert(match(r'^\d{5}$', zipcode))
         log.info('got %s from the request or session' % zipcode)
     except:
         log.info('%s doesnt look like a zipcode, trying to parse' % zipcode)
-        zipcode = get_location(zipcode)
-        if zipcode is None:
+        url, name, zmw = parse_user_input(zipcode)
+        location = Location(zmw, name)
+        if url is None:
             zipcode = '10027'
             log.info('couldnt parse location, using %s' % zipcode)
         else:
-            log.info('%s parsed' % zipcode)
+            parsed = True
+            log.info('succesfully parsed. %s -> %s, %s, %s' % (zipcode, url, name, zmw))
+            log.info('%s' % location)
     try:
         num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
     except:
         num_hours = 12
-    location = Location.query.get(zipcode)
-    if not location:
+    if location is None:
+        location = Location.query.get(zipcode)
+    if location is None:
         log.info('%s wasnt in the cache, looking up geo information' % zipcode)
         location = Location(zipcode, geolookup(zipcode))
     else:
@@ -64,7 +69,7 @@ def home():
     log.info('%s is %s' % (zipcode, location.city))
     if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
         log.info('looking up the weather for %s' % zipcode)
-        location.cache = dumps(weather_for_zip(zipcode))
+        location.cache = dumps(weather_for_url(url)) if parsed else dumps(weather_for_zip(zipcode))
         location.last_updated = datetime.now()
     else:
         log.info('weather for %s was recently cached, reusing' % zipcode)

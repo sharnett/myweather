@@ -1,13 +1,18 @@
+import logging
+import urllib
 from urllib2 import urlopen, URLError
 from json import load, dump
 from os.path import dirname, abspath, getmtime, exists
 from os import environ
 from time import time, sleep
 
+logging.basicConfig()
+log = logging.getLogger(__name__)
 directory = dirname(abspath(__file__))
 KEY = environ['WUNDERGROUND_KEY']
 feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
+url_base2 = 'http://api.wunderground.com/api/%s/%s%s.json'
 
 def geolookup(zip_code):
     url = url_base % (KEY, 'geolookup', zip_code)
@@ -40,13 +45,29 @@ def get_shit_i_care_about(w):
                 (time, icon, icon_pos, temp, pop, feels_like)
     return [get_row(f) for f in w['hourly_forecast']]
 
-def get_location(s):
-    url = 'http://autocomplete.wunderground.com/aq?query=%s'
+def parse_user_input(s):
+    ''' Takes contents of 'enter zip code or city' field and gives it to the wunderground autocomplete API.
+    Returns the URL path and name of the top result.
+    '''
+    url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s)
     try:
-        x = load(urlopen(url % s))['RESULTS'][0]['zmw']
+        top_result = load(urlopen(url))['RESULTS'][0]
+        return top_result['l'], top_result['name'], top_result['zmw']
     except:
-        return
-    return x
+        log.warning("Couldn't get location for %s" % s)
+        return None, None, None
+
+def weather_for_url(url):
+    url = url_base2 % (KEY, feature, url)
+    for i in range(3):
+        try:
+            data = load(urlopen(url))
+            break
+        except URLError:
+            sleep(i)
+    else:
+        raise URLError('urlopen timeout max retries')
+    return get_shit_i_care_about(data)
 
 def weather_for_zip(zip_code):
     url = url_base % (KEY, feature, zip_code)
