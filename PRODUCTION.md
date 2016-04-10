@@ -8,3 +8,5 @@ env WUNDERGROUND_KEY="my_api_key"
 ```
 
 `/etc/uwsgi.ini`
+
+You need to run this from time to time: `sudo service uwsgi restart`
