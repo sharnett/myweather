@@ -30,7 +30,9 @@ def parse_user_input(s):
     Returns the URL path and name of the top result.
     '''
     url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s)
-    top_result = load(urlopen(url))['RESULTS'][0]
+    response = load(urlopen(url))
+    # will raise an IndexError if RESULTS is empty
+    top_result = response['RESULTS'][0]
     logging.info(top_result['l'])
     return top_result['l'], top_result['name'], top_result['zmw']
   

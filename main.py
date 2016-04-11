@@ -40,9 +40,12 @@ def home():
     log.info('STARTING')
     prev_url = session.get('url', '/q/zmw:10027')
     user_input = request.args.get('user_input', '10025')
-    url, location_name, zmw = parse_user_input(user_input)
-    if url is None:
-        flask.flash('Please try another city or zipcode')
+    try:
+        url, location_name, zmw = parse_user_input(user_input)
+    except IndexError, KeyError:
+        flask.flash('seanweather didnt like that, please try another city or zipcode')
+        return render_template('weather_form.html', data_string='', city='',
+            zmw='', num_hours=12)
     else:
         location = Location(zmw, location_name)
         log.info('succesfully parsed. %s -> %s, %s, %s' % (user_input, url, location_name, zmw))
@@ -50,6 +53,7 @@ def home():
     try:
         num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
     except:
+        flask.flash('seanweather didnt like the number of hours, using 12')
         num_hours = 12
     if location is None:
         location = Location.query.get(zipcode)
