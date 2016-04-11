@@ -2,7 +2,7 @@ import flask
 import logging
 import logging.handlers
 from flask import render_template, request, session
-from get_json import weather_for_zip, weather_for_url, geolookup, limit, parse_user_input
+from get_json import weather_for_url, parse_user_input, limit_hours
 from re import match
 from traceback import format_exc
 from os import environ
@@ -38,23 +38,15 @@ def main():
 @app.route('/', methods=['GET'])
 def home():
     log.info('STARTING')
-    prev_zip = session.get('zipcode', '10027')
-    location, parsed = None, False
-    try:
-        zipcode = request.args.get('zipcode', prev_zip)
-        assert(match(r'^\d{5}$', zipcode))
-        log.info('got %s from the request or session' % zipcode)
-    except:
-        log.info('%s doesnt look like a zipcode, trying to parse' % zipcode)
-        url, name, zmw = parse_user_input(zipcode)
-        location = Location(zmw, name)
-        if url is None:
-            zipcode = '10027'
-            log.info('couldnt parse location, using %s' % zipcode)
-        else:
-            parsed = True
-            log.info('succesfully parsed. %s -> %s, %s, %s' % (zipcode, url, name, zmw))
-            log.info('%s' % location)
+    prev_url = session.get('url', '/q/zmw:10027')
+    user_input = request.args.get('user_input', '10025')
+    url, location_name, zmw = parse_user_input(user_input)
+    if url is None:
+        flask.flash('Please try another city or zipcode')
+    else:
+        location = Location(zmw, location_name)
+        log.info('succesfully parsed. %s -> %s, %s, %s' % (user_input, url, location_name, zmw))
+        log.info('%s' % location)
     try:
         num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
     except:
@@ -65,24 +57,23 @@ def home():
         log.info('%s wasnt in the cache, looking up geo information' % zipcode)
         location = Location(zipcode, geolookup(zipcode))
     else:
-        log.info('%s was in the cache, reusing geoinformation' % zipcode)
-    log.info('%s is %s' % (zipcode, location.city))
+        log.info('%s was in the cache, reusing geoinformation' % url)
     if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
-        log.info('looking up the weather for %s' % zipcode)
-        location.cache = dumps(weather_for_url(url)) if parsed else dumps(weather_for_zip(zipcode))
+        log.info('looking up the weather for %s' % location_name)
+        location.cache = dumps(weather_for_url(url))
         location.last_updated = datetime.now()
     else:
         log.info('weather for %s was recently cached, reusing' % zipcode)
-    ds = limit(loads(location.cache), num_hours)
+    ds = limit_hours(loads(location.cache), num_hours)
     location = db.session.merge(location)
     db.session.add(Lookup(location))
     db.session.commit()
-    session['zipcode'] = zipcode
+    session['url'] = url
     session['num_hours'] = num_hours
     session.permanent = True
-    log.info('FINISHED with %s' % zipcode)
+    log.info('FINISHED with %s' % user_input)
     return render_template('weather_form.html', data_string=ds, city=location.city, 
-            zipcode=zipcode, num_hours=num_hours)
+            zmw=zmw, num_hours=num_hours)
 
 @app.route('/comment', methods=['POST'])
 def comment():

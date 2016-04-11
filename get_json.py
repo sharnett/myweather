@@ -1,37 +1,17 @@
 import logging
 import urllib
 from urllib2 import urlopen, URLError
-from json import load, dump
-from os.path import dirname, abspath, getmtime, exists
+from json import load
 from os import environ
 from time import time, sleep
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
-directory = dirname(abspath(__file__))
 KEY = environ['WUNDERGROUND_KEY']
 feature = 'hourly10day'
-url_base = 'http://api.wunderground.com/api/%s/%s/q/%s.json'
-url_base2 = 'http://api.wunderground.com/api/%s/%s%s.json'
+url_base = 'http://api.wunderground.com/api/%s/%s%s.json'
 
-def geolookup(zip_code):
-    url = url_base % (KEY, 'geolookup', zip_code)
-    try:
-        x = load(urlopen(url))['location']
-    except:
-        return zip_code
-    try:
-        city = x['city']
-    except:
-        return zip_code
-    try:
-        state = x['state']
-    except:
-        print('boner')
-        return city
-    return city + ', ' + state
-
-def get_shit_i_care_about(w):
+def parse_json(w):
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
         return ''
     def get_row(f):
@@ -50,15 +30,13 @@ def parse_user_input(s):
     Returns the URL path and name of the top result.
     '''
     url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s)
-    try:
-        top_result = load(urlopen(url))['RESULTS'][0]
-        return top_result['l'], top_result['name'], top_result['zmw']
-    except:
-        log.warning("Couldn't get location for %s" % s)
-        return None, None, None
+    top_result = load(urlopen(url))['RESULTS'][0]
+    logging.info(top_result['l'])
+    return top_result['l'], top_result['name'], top_result['zmw']
+  
 
 def weather_for_url(url):
-    url = url_base2 % (KEY, feature, url)
+    url = url_base % (KEY, feature, url)
     for i in range(3):
         try:
             data = load(urlopen(url))
@@ -67,21 +45,9 @@ def weather_for_url(url):
             sleep(i)
     else:
         raise URLError('urlopen timeout max retries')
-    return get_shit_i_care_about(data)
+    return parse_json(data)
 
-def weather_for_zip(zip_code):
-    url = url_base % (KEY, feature, zip_code)
-    for i in range(3):
-        try:
-            data = load(urlopen(url))
-            break
-        except URLError:
-            sleep(i)
-    else:
-        raise URLError('urlopen timeout max retries')
-    return get_shit_i_care_about(data)
-
-def limit(g, num_hours):
+def limit_hours(g, num_hours):
     rows = g[:num_hours]
     return "[" + ",\n".join(rows) + "]"
         
