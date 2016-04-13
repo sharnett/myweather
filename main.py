@@ -1,6 +1,7 @@
 import flask
 import logging
 import logging.handlers
+import re
 from flask import render_template, request, session
 from get_json import weather_for_url, parse_user_input, limit_hours
 from re import match
@@ -60,6 +61,15 @@ def get_location(user_input):
         return location, '10027'
 
 
+def parse_temps(weather_data, num_hours=24):
+    temps = []
+    pattern = r'temp: (\d+)'
+    for d in weather_data[:num_hours]:
+        m = re.search(pattern, d)
+        if m is not None:
+            temps.append(int(m.group(1)))
+    return max(temps), min(temps)
+
 @app.route('/', methods=['GET'])
 def home():
     log.info('STARTING')
@@ -78,7 +88,9 @@ def home():
         location.last_updated = datetime.now()
     else:
         log.info('weather for %s was recently cached, reusing' % location.zmw)
-    ds = limit_hours(loads(location.cache), num_hours)
+    weather_data = loads(location.cache)
+    max_temp, min_temp = parse_temps(weather_data)
+    ds = limit_hours(weather_data, num_hours)
     location = db.session.merge(location)
     db.session.add(Lookup(user_input, location))
     db.session.commit()
@@ -86,8 +98,10 @@ def home():
     session['num_hours'] = num_hours
     session.permanent = True
     log.info('FINISHED with %s' % user_input)
-    return render_template('weather_form.html', data_string=ds, city=location.name, 
-            user_input=user_input, num_hours=num_hours)
+    return render_template('weather_form.html', data_string=ds,
+                           city=location.name, user_input=user_input,
+                           num_hours=num_hours, max_temp=max_temp,
+                           min_temp=min_temp)
 
 
 @app.route('/comment', methods=['POST'])
