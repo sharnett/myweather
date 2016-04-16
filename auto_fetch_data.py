@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from get_json import weather_for_zip
+from get_json import weather_for_url
 from datetime import datetime
 from json import dumps
 from sqlite3 import connect
@@ -9,11 +9,13 @@ if __name__ == '__main__':
     directory = dirname(abspath(__file__))
     conn = connect(directory + '/db.db')
     c = conn.cursor()
-    zipcodes = {'10027', '94110', '11205', '08901'}
+    zipcodes = {'10027', '94110', '94618', '08904'}
     for z in zipcodes:
-        cache = dumps(weather_for_zip(z))
+        zmw = '%s.1.99999' % z
+        url = '/q/zmw:%s' % zmw
+        cache = dumps(weather_for_url(url))
         last_updated = datetime.now()
-        c.execute('update location set cache=?,last_updated=? where zipcode=?',
-                (cache, last_updated, z))
+        c.execute('update location set cache=?, last_updated=? where zmw=?',
+                (cache, last_updated, zmw))
     conn.commit()
     conn.close()
