@@ -4,7 +4,7 @@ function weather() {
     chart.pathToImages = "static/";
     chart.categoryField = "date";
     chart.marginTop = 40;
-    chart.addTitle(num_hours.toString() + ' hour forecast for ' + city);
+    //chart.addTitle(num_hours.toString() + ' hour forecast for ' + location);
 
     // AXES
     // category                

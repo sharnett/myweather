@@ -15,7 +15,6 @@
         <script type="text/javascript">
             var lineChartData = {{ data_string|safe }};
             var num_hours = {{ num_hours }};
-            var city = "{{ city }}";
             AmCharts.ready(weather);
         </script>
         <style type="text/css">
@@ -30,6 +29,10 @@
             .form-horizontal .control-group {
                 margin-bottom: 5px;
             }
+            body {
+                color: #3d3d3d;
+                background: #fafafe;
+            }
         </style>
   </head>
   <body>
@@ -37,7 +40,8 @@
        <div class=flash>{{ message | safe }}</div>
        {% endfor %}
       <h3>Welcome to SeanWeather&trade;</h3>
-      <h4> 24 hour high and low: {{ max_temp }}, {{ min_temp }} </h4>
+      <h4> {{ location }} </h4>
+      <h4> 24 hour high/low: {{ max_temp }}F/{{ min_temp }}F </h4>
       <div id="chart_div"> </div>
       <form action="" method="GET" class="form-horizontal">
           <div class="control-group">

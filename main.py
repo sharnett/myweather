@@ -99,7 +99,7 @@ def home():
     session.permanent = True
     log.info('FINISHED with %s' % user_input)
     return render_template('weather_form.html', data_string=ds,
-                           city=location.name, user_input=user_input,
+                           location=location.name, user_input=user_input,
                            num_hours=num_hours, max_temp=max_temp,
                            min_temp=min_temp)
 
