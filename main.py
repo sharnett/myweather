@@ -68,6 +68,8 @@ def parse_temps(weather_data, num_hours=24):
         m = re.search(pattern, d)
         if m is not None:
             temps.append(int(m.group(1)))
+    if not temps:
+        return '', ''
     return max(temps), min(temps)
 
 @app.route('/', methods=['GET'])
@@ -84,16 +86,22 @@ def home():
         num_hours = 12
     if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
         log.info('using weather API for %s' % location.zmw)
-        location.cache = dumps(weather_for_url(location.url))
-        location.last_updated = datetime.now()
+        wd = weather_for_url(location.url)
+        location.cache = dumps(wd)
+        if wd:
+            location.last_updated = datetime.now()
+        else:
+            log.warning("didn't get any results from weather API")
     else:
         log.info('weather for %s was recently cached, reusing' % location.zmw)
-    weather_data = loads(location.cache)
-    max_temp, min_temp = parse_temps(weather_data)
-    ds = limit_hours(weather_data, num_hours)
     location = db.session.merge(location)
     db.session.add(Lookup(user_input, location))
     db.session.commit()
+
+    weather_data = loads(location.cache)
+    print(len(weather_data))
+    max_temp, min_temp = parse_temps(weather_data)
+    ds = limit_hours(weather_data, num_hours)
     session['user_input'] = user_input
     session['num_hours'] = num_hours
     session.permanent = True
