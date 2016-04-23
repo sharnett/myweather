@@ -137,15 +137,16 @@ def fake():
  icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 55, pop: 0, feel: 55},
 {date: new Date(1461474000000),
  icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 53, pop: 0, feel: 53}]'''
+    icon = 'http://icons.wxug.com/i/c/k/nt_clear.gif'
     location = '10027 -- New York, NY'
     user_input = 'chilled'
     num_hours = 12
-    max_temp, min_temp = 80, 65
+    current_temp, max_temp, min_temp = 75, 80, 65
     log.info('FINISHED with %s -- fake' % user_input)
     return render_template('weather_form.html', data_string=ds,
                            location=location, user_input=user_input,
-                           num_hours=num_hours, max_temp=max_temp,
-                           min_temp=min_temp)
+                           num_hours=num_hours, current_temp=current_temp,
+                           max_temp=max_temp, min_temp=min_temp, icon=icon)
 
 
 @app.route('/comment', methods=['POST'])
