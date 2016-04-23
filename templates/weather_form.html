@@ -59,10 +59,13 @@
                 color: #3d3d3d;
                 padding-right: 10px;
             }
-            #current {
-                font-size: xx-large;
+            #current_temp {
+                font-size: x-large;
                 color: #7e7e7e;
                 padding-right: 10px;
+            }
+            #current_conditions {
+                width: 40px;
             }
             #high {
                 color: #942222;
@@ -84,7 +87,8 @@
 	  </div>
       <div id="summary">
 	      <p> <span id="location"> {{ location }} </span>
-                  <span id="current"> {{ current_temp }}&deg; <img src={{ icon }} /> </span>
+                  <br>
+                  <span id="current_temp"> {{ current_temp }}&deg; <img id="current_conditions" src={{ icon | safe }} /> </span>
 	          <span id="high">{{ max_temp }}&deg;</span>
 	          <span id="low"> {{ min_temp }}&deg;</span>
           </p>
