@@ -99,7 +99,6 @@ def home():
     db.session.commit()
 
     weather_data = loads(location.cache)
-    print(len(weather_data))
     max_temp, min_temp = parse_temps(weather_data)
     ds = limit_hours(weather_data, num_hours)
     session['user_input'] = user_input
@@ -108,6 +107,43 @@ def home():
     log.info('FINISHED with %s' % user_input)
     return render_template('weather_form.html', data_string=ds,
                            location=location.name, user_input=user_input,
+                           num_hours=num_hours, max_temp=max_temp,
+                           min_temp=min_temp)
+
+@app.route('/fake')
+def fake():
+    log.info('STARTING -- fake')
+    ds = '''[{date: new Date(1461434400000),
+ icon: 'http://icons.wxug.com/i/c/k/partlycloudy.gif', icon_pos: 100, temp: 66, pop: 15, feel: 66},
+{date: new Date(1461438000000),
+ icon: 'http://icons.wxug.com/i/c/k/partlycloudy.gif', icon_pos: 100, temp: 67, pop: 15, feel: 67},
+{date: new Date(1461441600000),
+ icon: 'http://icons.wxug.com/i/c/k/partlycloudy.gif', icon_pos: 100, temp: 67, pop: 15, feel: 67},
+{date: new Date(1461445200000),
+ icon: 'http://icons.wxug.com/i/c/k/partlycloudy.gif', icon_pos: 100, temp: 68, pop: 15, feel: 68},
+{date: new Date(1461448800000),
+ icon: 'http://icons.wxug.com/i/c/k/clear.gif', icon_pos: 100, temp: 66, pop: 0, feel: 66},
+{date: new Date(1461452400000),
+ icon: 'http://icons.wxug.com/i/c/k/clear.gif', icon_pos: 100, temp: 64, pop: 0, feel: 64},
+{date: new Date(1461456000000),
+ icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 62, pop: 0, feel: 62},
+{date: new Date(1461459600000),
+ icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 61, pop: 0, feel: 61},
+{date: new Date(1461463200000),
+ icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 59, pop: 0, feel: 59},
+{date: new Date(1461466800000),
+ icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 58, pop: 0, feel: 58},
+{date: new Date(1461470400000),
+ icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 55, pop: 0, feel: 55},
+{date: new Date(1461474000000),
+ icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 53, pop: 0, feel: 53}]'''
+    location = '10027 -- New York, NY'
+    user_input = 'chilled'
+    num_hours = 12
+    max_temp, min_temp = 80, 65
+    log.info('FINISHED with %s -- fake' % user_input)
+    return render_template('weather_form.html', data_string=ds,
+                           location=location, user_input=user_input,
                            num_hours=num_hours, max_temp=max_temp,
                            min_temp=min_temp)
 
