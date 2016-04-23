@@ -4,9 +4,8 @@ import logging.handlers
 import re
 from flask import render_template, request, session
 from get_json import weather_for_url, parse_user_input, limit_hours
-from re import match
-from traceback import format_exc
 from os import environ
+from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
 from json import loads, dumps
@@ -32,6 +31,12 @@ fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
 log.addHandler(fh)
+
+if not isfile(dirname(abspath(__file__)) + '/db.db'):
+    log.warning('db doesnt exist, creating a new one')
+    with app.app_context():
+        db.create_all()
+
 
 def main():
     app.run(host='0.0.0.0')
