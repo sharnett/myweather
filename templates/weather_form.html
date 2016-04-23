@@ -9,6 +9,7 @@
         <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/apple-touch-icon-114x114-precomposed.png" />
         <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/apple-touch-icon-144x144-precomposed.png" />
         <link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap.min.css') }}">
+        <link rel="stylesheet" type="text/css" href="/static/mystyle.css" />
         <script src="/static/amcharts.js" type="text/javascript"></script>
         <script src="/static/raphael.js" type="text/javascript"></script>
         <script src="/static/weather.js" type="text/javascript"></script>
@@ -17,62 +18,7 @@
             var num_hours = {{ num_hours }};
             AmCharts.ready(weather);
         </script>
-        <style type="text/css">
-            #chart_div {
-                width:100%;
-                height:300px;
-            }
-            #summary {
-            	font-family: sans-serif;
-                color: #555;
-                background: #fdfdfe;
-                display: inline-block;
-                border: 1px solid #ddd;
-                margin-left: 50px;
-                padding-top: 10px;
-                padding-left: 10px;
-                padding-right: 10px;
-            }
-            .flash {
-                font-size: small;
-                color: grey;
-            }
-            .form-horizontal .control-group {
-                margin-bottom: 5px;
-            }
-            body {
-                color: #3d3d3d;
-                background: #fafafe;
-            }
-            .header img {
-                float: left;
-                width: 40px;
-                padding-right: 5px;
-            }
-            .header h1 {
-                position: relative;
-                top: 18px;
-                left: 10px;
-            }
-            #location {
-                font-size: x-large;
-                color: #3d3d3d;
-                padding-right: 10px;
-            }
-            #current {
-                font-size: xx-large;
-                color: #7e7e7e;
-                padding-right: 10px;
-            }
-            #high {
-                color: #942222;
-                font-weight: bolder;
-            }
-            #low {
-                color: #566CFC;
-                font-weight: lighter;
-            }
-        </style>
+
   </head>
   <body>
       {% for message in get_flashed_messages() %}
@@ -93,18 +39,18 @@
       <form action="" method="GET" class="form-horizontal">
           <div class="control-group">
               <label class="control-label" for="input_zipcode">Zip code or city:</label>
-              <div class="controls"> 
-                  <input class="input-mini" type="text" size=5 id="input_zipcode" name="user_input" value="{{ user_input }}"> 
+              <div class="controls">
+                  <input class="input-mini" type="text" size=5 id="input_zipcode" name="user_input" value="{{ user_input }}">
               </div>
           </div>
           <div class="control-group">
               <label class="control-label" for="input_num_hours"># hours to display: </label>
-              <div class="controls"> 
-                  <input class="input-mini" type="text" size=3 id="input_num_hours" name="num_hours" value="{{ num_hours }}"> 
+              <div class="controls">
+                  <input class="input-mini" type="text" size=3 id="input_num_hours" name="num_hours" value="{{ num_hours }}">
               </div>
           </div>
           <div class="control-group">
-              <div class="controls"> 
+              <div class="controls">
                   <button type="submit" class="btn btn-mini"> GIMME WEATHER </button>
               </div>
           </div>
