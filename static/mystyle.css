@@ -9,20 +9,30 @@
     display: inline-block;
     border: 1px solid #ddd;
     margin-left: 50px;
-    padding-top: 10px;
+    padding-top: 8px;
     padding-left: 10px;
     padding-right: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 }
 .flash {
     font-size: small;
     color: grey;
 }
+.form-horizontal {
+    width: 100px;
+    padding-left:;
+
+}
 .form-horizontal .control-group {
     margin-bottom: 5px;
+    text-align: center;
+
 }
 body {
     color: #3d3d3d;
     background: #fafafe;
+    padding-left: 20px;
 }
 .header img {
     float: left;
@@ -51,4 +61,43 @@ body {
 #low {
     color: #566CFC;
     font-weight: lighter;
+}
+
+.btn-large{
+    width: 200px;
+    position: relative;
+    left: 180px;
+    bottom: 83px;
+    margin-bottom: -50px;
+}
+h3{
+    font-family: roboto;
+    color: white;
+}
+#zipcode{
+    position: relative;
+    left: 30px;
+}
+#hours{
+    position: relative;
+    bottom: 86px;
+    left: 180px;
+    margin-bottom: -80px;
+}
+.input-mini {
+    text-align: center;
+}
+
+.card-panel {
+    width:700px;
+    text-align: center;
+}
+
+#seanlogo {
+    margin-top: 20px;
+    margin-left: 22px;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+
 }
