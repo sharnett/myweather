@@ -69,8 +69,15 @@ def parse_temps(weather_data, num_hours=24):
         if m is not None:
             temps.append(int(m.group(1)))
     if not temps:
-        return '', ''
-    return max(temps), min(temps)
+        return '', '', ''
+    return temps[0], max(temps), min(temps)
+
+def parse_icon(weather_data):
+    pattern = r"icon: ('.*'),"
+    m = re.search(pattern, weather_data[0])
+    if m is not None:
+        return m.group(1)
+    return ''
 
 @app.route('/', methods=['GET'])
 def home():
@@ -99,7 +106,8 @@ def home():
     db.session.commit()
 
     weather_data = loads(location.cache)
-    max_temp, min_temp = parse_temps(weather_data)
+    current_temp, max_temp, min_temp = parse_temps(weather_data)
+    icon = parse_icon(weather_data)
     ds = limit_hours(weather_data, num_hours)
     session['user_input'] = user_input
     session['num_hours'] = num_hours
@@ -107,8 +115,8 @@ def home():
     log.info('FINISHED with %s' % user_input)
     return render_template('weather_form.html', data_string=ds,
                            location=location.name, user_input=user_input,
-                           num_hours=num_hours, max_temp=max_temp,
-                           min_temp=min_temp)
+                           num_hours=num_hours, current_temp=current_temp,
+                           max_temp=max_temp, min_temp=min_temp, icon=icon)
 
 @app.route('/fake')
 def fake():
