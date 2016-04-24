@@ -8,7 +8,7 @@
     background: #fdfdfe;
     display: inline-block;
     border: 1px solid #ddd;
-    margin-left: 50px;
+
     padding-top: 8px;
     padding-left: 10px;
     padding-right: 10px;
@@ -48,6 +48,7 @@ body {
     font-size: x-large;
     color: #3d3d3d;
     padding-right: 10px;
+    font-style: bold;
 }
 #current {
     font-size: xx-large;
@@ -66,8 +67,8 @@ body {
 .btn-large{
     width: 200px;
     position: relative;
-    left: 180px;
-    bottom: 83px;
+    left: 170px;
+    bottom: 81px;
     margin-bottom: -50px;
 }
 h3{
@@ -76,12 +77,12 @@ h3{
 }
 #zipcode{
     position: relative;
-    left: 30px;
+    left: 40px;
 }
 #hours{
     position: relative;
-    bottom: 86px;
-    left: 180px;
+    bottom: 85px;
+    left: 190px;
     margin-bottom: -80px;
 }
 .input-mini {
@@ -99,5 +100,14 @@ h3{
     border-radius: 50%;
     width: 80px;
     height: 80px;
-
+}
+#currentimg{
+  position: relative;
+  top: 12px;
+}
+#chart_div > div:nth-child(1) > svg > g:nth-child(16) > g > rect{
+  display: none;
+}
+#chart_div > div:nth-child(1) > svg > g:nth-child(16) > g > text > tspan{
+  display:none;
 }

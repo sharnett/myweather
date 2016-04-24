@@ -27,11 +27,11 @@
       {% endfor %}
       <div class="header">
           <img id="seanlogo" src="/static/apple-touch-icon-57x57-precomposed.png" />
-	      <div class="card-panel teal lighten-2 z-depth-3"><h3>Welcome to SeanWeather&trade;</h3></div>
+	      <div class="card-panel light-blue z-depth-3"><h3>Welcome to SeanWeather&trade;</h3></div>
 	  </div>
-      <div id="summary" class="z-depth-2">
+      <div id="summary" class="cyan lighten-5 z-depth-2">
 	      <p> <span id="location"> {{ location }} </span>
-                  <span id="current"> {{ current_temp }}&deg; <img src={{ icon }} /> </span>
+                  <span id="current"> {{ current_temp }}&deg; <img id="currentimg" src={{ icon }} /> </span>
 	          <span id="high">{{ max_temp }}&deg;</span>
 	          <span id="low"> {{ min_temp }}&deg;</span>
           </p>
