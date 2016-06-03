@@ -45,28 +45,36 @@
                 background: #fafafe;
             }
             .header img {
-			  float: left;
-			  width: 40px;
-			  padding-right: 5px;
-			}
-			.header h1 {
-			  position: relative;
-			  top: 18px;
-			  left: 10px;
-			}
-			#location {
-			  font-size: larger;
-              color: #3d3d3d;
-			  padding-right: 10px;
-			}
-			#high {
+                float: left;
+                width: 40px;
+                padding-right: 5px;
+            }
+            .header h1 {
+                position: relative;
+                top: 18px;
+                left: 10px;
+            }
+            #location {
+                font-size: x-large;
+                color: #3d3d3d;
+                padding-right: 10px;
+            }
+            #current_temp {
+                font-size: x-large;
+                color: #7e7e7e;
+                padding-right: 10px;
+            }
+            #current_conditions {
+                width: 40px;
+            }
+            #high {
                 color: #942222;
                 font-weight: bolder;
-			}
-			#low {
+            }
+            #low {
                 color: #566CFC;
                 font-weight: lighter;
-			}
+            }
         </style>
   </head>
   <body>
@@ -79,6 +87,8 @@
 	  </div>
       <div id="summary">
 	      <p> <span id="location"> {{ location }} </span>
+                  <br>
+                  <span id="current_temp"> {{ current_temp }}&deg; <img id="current_conditions" src={{ icon | safe }} /> </span>
 	          <span id="high">{{ max_temp }}&deg;</span>
 	          <span id="low"> {{ min_temp }}&deg;</span>
           </p>
