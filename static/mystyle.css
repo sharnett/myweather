@@ -2,19 +2,7 @@
     width:100%;
     height:300px;
 }
-#summary {
-  font-family: sans-serif;
-    color: #555;
-    background: #fdfdfe;
-    display: inline-block;
-    border: 1px solid #ddd;
-    padding-top: 8px;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    margin-left: 75px;
-}
+
 .flash {
     font-size: small;
     color: grey;
@@ -34,32 +22,30 @@ body {
     background: #fafafe;
     padding-left: 20px;
 }
-.header img {
-    float: left;
-    width: 40px;
-    padding-right: 5px;
-}
-.header h1 {
-    position: relative;
-    top: 18px;
-    left: 10px;
+
+#summary {
+    font-family: sans-serif;
+    display: inline-block;
+    height: 40px;
+    padding-left: 10px;
 }
 #location {
-    font-size: x-large;
     color: #3d3d3d;
     padding-right: 10px;
     font-style: bold;
-    font-family: helvetica;
 }
 #current {
-    font-size: xx-large;
+    font-size: 20px;
     color: #7e7e7e;
     padding-right: 10px;
     padding-left: 20px;
     border-left: 1px solid;
-    padding-bottom: 10px;
-    padding-top: 10px;
     border-right:1px solid;
+}
+#currentimg {
+    height: 25px;
+    position: relative;
+    top: 5px;
 }
 #high {
     padding-left: 20px;
@@ -76,6 +62,7 @@ body {
 #temp_divide{
   font-size: 20px;
 }
+
 .btn-large{
     width: 200px;
     position: relative;
@@ -83,44 +70,49 @@ body {
     bottom: 81px;
     margin-bottom: -50px;
 }
-h3{
-    font-family: roboto;
-    color: white;
-}
+
 #zipcode{
     position: relative;
-    left: 80px;
+    left: 10px;
 }
 #hours{
     position: relative;
     bottom: 85px;
-    left: 230px;
+    left: 160px;
     margin-bottom: -80px;
 }
 .input-mini {
     text-align: center;
 }
 
-.card-panel {
-    width:700px;
+.header {
+    width: 500px;
+    height: 50px;
     text-align: center;
     background-image:
       linear-gradient(
         #03a9f4, #b3e5fc
       );
+    font-family: roboto;
+    color: white;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.header_span {
+    display: inline-block;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+#seanlogo {
+    float: left;
+    height: 40px;
+    border-radius: 50%;
+    margin-left: -50px;
+    margin-right: 10px;
+    margin-top: 5px;
 }
 
-#seanlogo {
-    margin-top: 20px;
-    margin-left: 22px;
-    border-radius: 50%;
-    width: 80px;
-    height: 80px;
-}
-#currentimg{
-  position: relative;
-  top: 12px;
-}
+
 #chart_div > div:nth-child(1) > svg > g:nth-child(16) > g > rect{
   display: none;
 }
