@@ -33,7 +33,7 @@
   	  </div>
       <div id="summary" class="cyan lighten-5 z-depth-1">
         <span id="location"> {{ location }} </span>
-        <span id="current"> {{ current_temp }}&deg; <img id="currentimg" src={{ icon | safe }} /> </span>
+        <span id="current"> {{ current_temp }}&deg; <a href=''>{{units}}</a> <img id="currentimg" src={{ icon | safe }} /> </span>
         <span id="high">{{ max_temp }}&deg;</span>
         <span id="temp_divide">/</span>
         <span id="low"> {{ min_temp }}&deg;</span>
@@ -41,6 +41,7 @@
       <div id="chart_div"> </div>
       <br>
       <form action="" method="GET" class="form-horizontal">
+          <input type="hidden" id="input_units" name="units" value="{{ units }}">
           <div id="zipcode" class="control-group">
               <label class="control-label" for="input_zipcode">Zip code or city:</label>
               <div class="controls">

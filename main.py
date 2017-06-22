@@ -121,7 +121,7 @@ def home():
     return render_template('weather_form.html', data_string=ds,
                            location=location.name, user_input=user_input,
                            num_hours=num_hours, current_temp=current_temp,
-                           max_temp=max_temp, min_temp=min_temp, icon=icon)
+                           max_temp=max_temp, min_temp=min_temp, icon=icon, units='F')
 
 @app.route('/fake')
 def fake():
@@ -159,7 +159,7 @@ def fake():
     return render_template('weather_form.html', data_string=ds,
                            location=location, user_input=user_input,
                            num_hours=num_hours, current_temp=current_temp,
-                           max_temp=max_temp, min_temp=min_temp, icon=icon)
+                           max_temp=max_temp, min_temp=min_temp, icon=icon, units='F')
 
 
 @app.route('/comment', methods=['POST'])
