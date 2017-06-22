@@ -11,7 +11,7 @@ KEY = environ['WUNDERGROUND_KEY']
 feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s%s.json'
 
-def parse_json(json_data, units='english'):
+def _parse_json(json_data, units='english'):
     w = json_data
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
         return ''
@@ -37,7 +37,7 @@ def parse_user_input(s):
     logging.info(top_result['l'])
     return top_result['l'], top_result['name'], top_result['zmw']
   
-def json_for_url(url):
+def _json_for_url(url):
     url = url_base % (KEY, feature, url)
     for i in range(3):
         try:
@@ -50,13 +50,12 @@ def json_for_url(url):
     return json_data
 
 def weather_for_url(url):
-    return parse_json(json_for_url(url))
+    return _parse_json(_json_for_url(url))
 
 def limit_hours(g, num_hours):
     rows = g[:num_hours]
     return "[" + ",\n".join(rows) + "]"
         
 if __name__ == "__main__":
-    zip_code = '10025'
-    print limit(weather_for_zip(zip_code), 12)
-    print geolookup(zip_code)
+    url = '/q/zmw:10027.1.99999'
+    print limit_hours(weather_for_url(url), 12)
