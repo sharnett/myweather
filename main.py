@@ -108,7 +108,7 @@ def home():
 
     if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
         log.info('using weather API for %s' % location.zmw)
-        wd = weather_for_url(location.url, units)
+        wd = weather_for_url(location.url)
         location.cache = dumps(wd)
         if wd:
             location.last_updated = datetime.now()

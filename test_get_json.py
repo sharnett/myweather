@@ -17,18 +17,10 @@ fake_json = {"hourly_forecast": [
     },
 ]}
 
-def test_parse_json_english():
+def test_parse_json():
     actual = get_json._parse_json(fake_json)
-    expected1 = ("{date: new Date(1498165200000),\n " +
-    	"icon: 'fake_url', icon_pos: 100, temp: 83, pop: 0, feel: 83}")
-    expected2 = ("{date: new Date(1498168800000),\n " +
-    	"icon: 'fake_url', icon_pos: 100, temp: 81, pop: 0, feel: 81}")
-    assert actual == [expected1, expected2]
-
-def test_parse_json_metric():
-    actual = get_json._parse_json(fake_json, 'C')
-    expected1 = ("{date: new Date(1498165200000),\n " +
-    	"icon: 'fake_url', icon_pos: 100, temp: 28, pop: 0, feel: 28}")
-    expected2 = ("{date: new Date(1498168800000),\n " +
-    	"icon: 'fake_url', icon_pos: 100, temp: 27, pop: 0, feel: 27}")
+    expected1 = ("{date: new Date(1498165200000), " +
+        "icon: 'fake_url', icon_pos: 100, temp: 83, pop: 0, feel: 83, temp_c: 28, feel_c: 28}")
+    expected2 = ("{date: new Date(1498168800000), " +
+        "icon: 'fake_url', icon_pos: 100, temp: 81, pop: 0, feel: 81, temp_c: 27, feel_c: 27}")
     assert actual == [expected1, expected2]
