@@ -87,18 +87,28 @@ def parse_icon(weather_data):
 @app.route('/', methods=['GET'])
 def home():
     log.info('STARTING')
+    # units
+    units = session.get('units', 'F')
+    if request.args.get('toggle_units') == 'true':
+        units = 'C' if units == 'F' else 'F'
+    session['units'] = units
+
+    # zip code
     user_input = request.args.get('user_input',
                                   session.get('user_input', '10027'))
     location, user_input = get_location(user_input)
     log.info('%s' % location)
+
+    # number of hours
     try:
         num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
     except:
         flask.flash('seanweather didnt like the number of hours, using 12')
         num_hours = 12
+
     if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
         log.info('using weather API for %s' % location.zmw)
-        wd = weather_for_url(location.url)
+        wd = weather_for_url(location.url, units)
         location.cache = dumps(wd)
         if wd:
             location.last_updated = datetime.now()
@@ -121,7 +131,7 @@ def home():
     return render_template('weather_form.html', data_string=ds,
                            location=location.name, user_input=user_input,
                            num_hours=num_hours, current_temp=current_temp,
-                           max_temp=max_temp, min_temp=min_temp, icon=icon, units='F')
+                           max_temp=max_temp, min_temp=min_temp, icon=icon, units=units)
 
 @app.route('/fake')
 def fake():
@@ -155,11 +165,12 @@ def fake():
     user_input = 'chilled'
     num_hours = 12
     current_temp, max_temp, min_temp = 75, 80, 65
+    units = 'F'
     log.info('FINISHED with %s -- fake' % user_input)
     return render_template('weather_form.html', data_string=ds,
                            location=location, user_input=user_input,
                            num_hours=num_hours, current_temp=current_temp,
-                           max_temp=max_temp, min_temp=min_temp, icon=icon, units='F')
+                           max_temp=max_temp, min_temp=min_temp, icon=icon, units=units)
 
 
 @app.route('/comment', methods=['POST'])

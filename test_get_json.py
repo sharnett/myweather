@@ -26,7 +26,7 @@ def test_parse_json_english():
     assert actual == [expected1, expected2]
 
 def test_parse_json_metric():
-    actual = get_json._parse_json(fake_json, 'metric')
+    actual = get_json._parse_json(fake_json, 'C')
     expected1 = ("{date: new Date(1498165200000),\n " +
     	"icon: 'fake_url', icon_pos: 100, temp: 28, pop: 0, feel: 28}")
     expected2 = ("{date: new Date(1498168800000),\n " +

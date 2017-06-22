@@ -18,6 +18,15 @@
             var num_hours = {{ num_hours }};
             AmCharts.ready(weather);
         </script>
+        <script type="text/javascript">
+            window.addEventListener("DOMContentLoaded", function () {
+              var form = document.getElementById("weather_form")
+              document.getElementById("units").addEventListener("click", function () {
+                document.getElementById("toggle_units").value = true
+                form.submit();
+              });
+            });
+        </script>
         <link rel="stylesheet" type="text/css" href="/static/mystyle.css" />
 
   </head>
@@ -33,15 +42,15 @@
   	  </div>
       <div id="summary" class="cyan lighten-5 z-depth-1">
         <span id="location"> {{ location }} </span>
-        <span id="current"> {{ current_temp }}&deg; <a href=''>{{units}}</a> <img id="currentimg" src={{ icon | safe }} /> </span>
+        <span id="current"> {{ current_temp }}&deg; <a href="#" id="units">{{units}}</a> <img id="currentimg" src={{ icon | safe }} /> </span>
         <span id="high">{{ max_temp }}&deg;</span>
         <span id="temp_divide">/</span>
         <span id="low"> {{ min_temp }}&deg;</span>
       </div>
       <div id="chart_div"> </div>
       <br>
-      <form action="" method="GET" class="form-horizontal">
-          <input type="hidden" id="input_units" name="units" value="{{ units }}">
+      <form action="" method="GET" class="form-horizontal" id="weather_form">
+          <input type="hidden" id="toggle_units" name="toggle_units" value=false>
           <div id="zipcode" class="control-group">
               <label class="control-label" for="input_zipcode">Zip code or city:</label>
               <div class="controls">

@@ -11,8 +11,9 @@ KEY = environ['WUNDERGROUND_KEY']
 feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s%s.json'
 
-def _parse_json(json_data, units='english'):
+def _parse_json(json_data, units='F'):
     w = json_data
+    units = 'metric' if units == 'C' else 'english'
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
         return ''
     def get_row(f):
@@ -49,8 +50,8 @@ def _json_for_url(url):
         raise URLError('urlopen timeout max retries')
     return json_data
 
-def weather_for_url(url):
-    return _parse_json(_json_for_url(url))
+def weather_for_url(url, units='F'):
+    return _parse_json(_json_for_url(url), units)
 
 def limit_hours(g, num_hours):
     rows = g[:num_hours]
