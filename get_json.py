@@ -11,15 +11,16 @@ KEY = environ['WUNDERGROUND_KEY']
 feature = 'hourly10day'
 url_base = 'http://api.wunderground.com/api/%s/%s%s.json'
 
-def parse_json(w):
+def parse_json(json_data, units='english'):
+    w = json_data
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
         return ''
     def get_row(f):
         icon_pos = 100
         icon = f['icon_url']
         time = int(f['FCTTIME']['epoch'])*1000  # date and time
-        temp = f['temp']['english']             # temperature
-        feels_like = f['feelslike']['english']  # temperature it feels like
+        temp = f['temp'][units]             # temperature
+        feels_like = f['feelslike'][units]  # temperature it feels like
         pop = f['pop']                          # probability of precipitation
         return "{date: new Date(%d),\n icon: '%s', icon_pos: %s, temp: %s, pop: %s, feel: %s}" % \
                 (time, icon, icon_pos, temp, pop, feels_like)
@@ -36,18 +37,20 @@ def parse_user_input(s):
     logging.info(top_result['l'])
     return top_result['l'], top_result['name'], top_result['zmw']
   
-
-def weather_for_url(url):
+def json_for_url(url):
     url = url_base % (KEY, feature, url)
     for i in range(3):
         try:
-            data = load(urlopen(url))
+            json_data = load(urlopen(url))
             break
         except URLError:
             sleep(i)
     else:
         raise URLError('urlopen timeout max retries')
-    return parse_json(data)
+    return json_data
+
+def weather_for_url(url):
+    return parse_json(json_for_url(url))
 
 def limit_hours(g, num_hours):
     rows = g[:num_hours]
