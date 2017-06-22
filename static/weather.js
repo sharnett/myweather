@@ -19,7 +19,7 @@ function weather() {
     var tempAxis = new AmCharts.ValueAxis();
     tempAxis.dashLength = 4;
     tempAxis.gridAlpha = 0;
-    tempAxis.unit = " F";
+    tempAxis.unit = ' ' + units;
     chart.addValueAxis(tempAxis);
 
     // pop value axis
@@ -50,20 +50,20 @@ function weather() {
     var feel = new AmCharts.AmGraph();
     feel.valueAxis = tempAxis;
     feel.type = "smoothedLine";
-    feel.valueField = "feel";
+    feel.valueField = (units == 'F') ? "feel" : "feel_c";
     feel.title = "Feels like";
     feel.lineColor = 'green';
-    feel.balloonText = "[[value]] F";
+    feel.balloonText = "[[value]] " + units;
     chart.addGraph(feel);
 
     // temp graph
     var temp = new AmCharts.AmGraph();
     temp.valueAxis = tempAxis;
     temp.type = "smoothedLine";
-    temp.valueField = "temp";
+    temp.valueField = (units == 'F') ? "temp" : "temp_c";
     temp.title = "Temperature";
     temp.lineColor = 'red';
-    temp.balloonText = "[[value]] F";
+    temp.balloonText = "[[value]] " + units;
     chart.addGraph(temp);
 
     // pop graph

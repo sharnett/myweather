@@ -16,13 +16,15 @@
         <script type="text/javascript">
             var lineChartData = {{ data_string|safe }};
             var num_hours = {{ num_hours }};
+            var units = '{{ units }}';
             AmCharts.ready(weather);
         </script>
         <script type="text/javascript">
             window.addEventListener("DOMContentLoaded", function () {
               var form = document.getElementById("weather_form")
               document.getElementById("units").addEventListener("click", function () {
-                document.getElementById("toggle_units").value = true
+                var units = '{{ units }}'
+                document.getElementById("new_units").value = (units == 'F') ? 'C' : 'F';
                 form.submit();
               });
             });
@@ -50,7 +52,7 @@
       <div id="chart_div"> </div>
       <br>
       <form action="" method="GET" class="form-horizontal" id="weather_form">
-          <input type="hidden" id="toggle_units" name="toggle_units" value=false>
+          <input type="hidden" id="new_units" name="new_units" value=false>
           <div id="zipcode" class="control-group">
               <label class="control-label" for="input_zipcode">Zip code or city:</label>
               <div class="controls">

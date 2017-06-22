@@ -66,9 +66,9 @@ def get_location(user_input):
         return location, '10027'
 
 
-def parse_temps(weather_data, num_hours=24):
+def parse_temps(weather_data, num_hours=24, units='F'):
     temps = []
-    pattern = r'temp: (\d+)'
+    pattern = r'temp_c: (\d+)' if units == 'C' else r'temp: (\d+)'
     for d in weather_data[:num_hours]:
         m = re.search(pattern, d)
         if m is not None:
@@ -89,9 +89,10 @@ def home():
     log.info('STARTING')
     # units
     units = session.get('units', 'F')
-    if request.args.get('toggle_units') == 'true':
-        units = 'C' if units == 'F' else 'F'
-    session['units'] = units
+    new_units = request.args.get('new_units', units)
+    if new_units != units:
+        units = new_units
+        session['units'] = units
 
     # zip code
     user_input = request.args.get('user_input',
@@ -121,7 +122,7 @@ def home():
     db.session.commit()
 
     weather_data = loads(location.cache)
-    current_temp, max_temp, min_temp = parse_temps(weather_data)
+    current_temp, max_temp, min_temp = parse_temps(weather_data, units=units)
     icon = parse_icon(weather_data)
     ds = limit_hours(weather_data, num_hours)
     session['user_input'] = user_input
