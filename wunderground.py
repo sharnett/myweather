@@ -1,7 +1,7 @@
+import json
 import logging
 import urllib
 from urllib2 import urlopen, URLError
-from json import load
 from os import environ
 from time import time, sleep
 
@@ -34,7 +34,7 @@ def parse_user_input(s):
     Returns the URL path and name of the top result.
     '''
     url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s.encode('utf-8'))
-    response = load(urlopen(url))
+    response = json.load(urlopen(url))
     # will raise an IndexError if RESULTS is empty
     top_result = response['RESULTS'][0]
     logging.info(top_result['l'])
@@ -44,7 +44,7 @@ def _json_for_url(url):
     url = url_base % (KEY, feature, url)
     for i in range(3):
         try:
-            json_data = load(urlopen(url))
+            json_data = json.load(urlopen(url))
             break
         except URLError:
             sleep(i)

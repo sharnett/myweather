@@ -3,7 +3,7 @@ import logging
 import logging.handlers
 import re
 from flask import render_template, request, session
-from get_json import weather_for_url, parse_user_input, limit_hours
+from wunderground import weather_for_url, parse_user_input, limit_hours
 from os import environ
 from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
@@ -67,6 +67,7 @@ def get_location(user_input):
 
 
 def parse_temps(weather_data, num_hours=24, units='F'):
+    ''' Get current temp, and min/max temps over the next num_hours '''
     temps = []
     pattern = r'temp_c: (\d+)' if units == 'C' else r'temp: (\d+)'
     for d in weather_data[:num_hours]:
