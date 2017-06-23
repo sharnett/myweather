@@ -3,7 +3,7 @@ import logging
 import logging.handlers
 import re
 from flask import render_template, request, session
-from wunderground import weather_for_url, parse_user_input, limit_hours
+from wunderground import weather_for_url, parse_user_input, jsonify
 from os import environ
 from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
@@ -69,21 +69,13 @@ def get_location(user_input):
 def parse_temps(weather_data, num_hours=24, units='F'):
     ''' Get current temp, and min/max temps over the next num_hours '''
     temps = []
-    pattern = r'temp_c: (\d+)' if units == 'C' else r'temp: (\d+)'
+    key = 'temp_c' if units == 'C' else 'temp'
     for d in weather_data[:num_hours]:
-        m = re.search(pattern, d)
-        if m is not None:
-            temps.append(int(m.group(1)))
+        temps.append(int(d[key]))
     if not temps:
         return '', '', ''
     return temps[0], max(temps), min(temps)
 
-def parse_icon(weather_data):
-    pattern = r"icon: ('.*'),"
-    m = re.search(pattern, weather_data[0])
-    if m is not None:
-        return m.group(1)
-    return ''
 
 @app.route('/', methods=['GET'])
 def home():
@@ -124,13 +116,13 @@ def home():
 
     weather_data = loads(location.cache)
     current_temp, max_temp, min_temp = parse_temps(weather_data, units=units)
-    icon = parse_icon(weather_data)
-    ds = limit_hours(weather_data, num_hours)
+    icon = weather_data[0].get('icon')
+    data_string = jsonify(weather_data[:num_hours])
     session['user_input'] = user_input
     session['num_hours'] = num_hours
     session.permanent = True
     log.info('FINISHED with %s' % user_input)
-    return render_template('weather_form.html', data_string=ds,
+    return render_template('weather_form.html', data_string=data_string,
                            location=location.name, user_input=user_input,
                            num_hours=num_hours, current_temp=current_temp,
                            max_temp=max_temp, min_temp=min_temp, icon=icon, units=units)

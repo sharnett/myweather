@@ -19,8 +19,18 @@ fake_json = {"hourly_forecast": [
 
 def test_parse_json():
     actual = wunderground._parse_json(fake_json)
+    expected1 = dict(date=1498165200000, icon='fake_url', icon_pos=100,
+        temp='83', pop='0', feel='83', temp_c='28', feel_c='28')
+    expected2 = dict(date=1498168800000, icon='fake_url', icon_pos=100,
+        temp='81', pop='0', feel='81', temp_c='27', feel_c='27')
+    assert actual == [expected1, expected2]
+
+def test_jsonify():
+    weather_data = wunderground._parse_json(fake_json)
+    actual = wunderground.jsonify(weather_data)
     expected1 = ("{date: new Date(1498165200000), " +
         "icon: 'fake_url', icon_pos: 100, temp: 83, pop: 0, feel: 83, temp_c: 28, feel_c: 28}")
     expected2 = ("{date: new Date(1498168800000), " +
         "icon: 'fake_url', icon_pos: 100, temp: 81, pop: 0, feel: 81, temp_c: 27, feel_c: 27}")
-    assert actual == [expected1, expected2]
+    expected = '[' + expected1 + ',\n' + expected2 + ']'
+    assert actual == expected

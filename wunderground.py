@@ -16,9 +16,7 @@ def _parse_json(json_data):
     if not 'hourly_forecast' in w or not w['hourly_forecast']:
         return ''
     def get_row(f):
-        row_string = ("{{date: new Date({date}), icon: '{icon}', icon_pos: {icon_pos}, " +
-            "temp: {temp}, pop: {pop}, feel: {feel}, temp_c: {temp_c}, feel_c: {feel_c}}}")
-        return row_string.format(
+        return dict(
             date=int(f['FCTTIME']['epoch'])*1000,
             icon=f['icon_url'],
             icon_pos=100,
@@ -55,9 +53,11 @@ def _json_for_url(url):
 def weather_for_url(url):
     return _parse_json(_json_for_url(url))
 
-def limit_hours(g, num_hours):
-    rows = g[:num_hours]
-    return "[" + ",\n".join(rows) + "]"
+def jsonify(weather_data):
+    row_string = ("{{date: new Date({date}), icon: '{icon}', icon_pos: {icon_pos}, " +
+        "temp: {temp}, pop: {pop}, feel: {feel}, temp_c: {temp_c}, feel_c: {feel_c}}}")
+    stringified = [row_string.format(**row) for row in weather_data]
+    return "[" + ",\n".join(stringified) + "]"
         
 if __name__ == "__main__":
     url = '/q/zmw:10027.1.99999'
