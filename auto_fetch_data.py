@@ -9,7 +9,7 @@ if __name__ == '__main__':
     directory = dirname(abspath(__file__))
     conn = connect(directory + '/db.db')
     c = conn.cursor()
-    zipcodes = {'10027', '94110', '94618', '08904'}
+    zipcodes = {'10003', '12180', '11105', '11215'}
     for z in zipcodes:
         zmw = '%s.1.99999' % z
         url = '/q/zmw:%s' % zmw
@@ -17,5 +17,6 @@ if __name__ == '__main__':
         last_updated = datetime.now()
         c.execute('update location set cache=?, last_updated=? where zmw=?',
                 (cache, last_updated, zmw))
+
     conn.commit()
     conn.close()
