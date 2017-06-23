@@ -3,13 +3,13 @@ import logging
 import urllib
 from urllib2 import urlopen, URLError
 from os import environ
-from time import time, sleep
+from time import sleep
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
-KEY = environ['WUNDERGROUND_KEY']
-feature = 'hourly10day'
-url_base = 'http://api.wunderground.com/api/%s/%s%s.json'
+
+_KEY = environ['WUNDERGROUND_KEY']
+_BASE_URL = 'http://api.wunderground.com/api/{key}/hourly10day{location_url}.json'
 
 def _parse_json(json_data):
     w = json_data
@@ -29,26 +29,25 @@ def _parse_json(json_data):
 
 def parse_user_input(s):
     ''' Takes contents of 'enter zip code or city' field and gives it to the wunderground autocomplete API.
-    Returns the URL path and name of the top result.
+    Returns the URL path and name of the top result, e.g.
+
+    '/q/zmw:10027.1.99999', '10027 - New York, NY', '10027.1.99999'
     '''
     url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s.encode('utf-8'))
     response = json.load(urlopen(url))
-    # will raise an IndexError if RESULTS is empty
-    top_result = response['RESULTS'][0]
-    logging.info(top_result['l'])
-    return top_result['l'], top_result['name'], top_result['zmw']
+    top_result = response['RESULTS'][0] # will raise an IndexError if RESULTS is empty
+    url, location_name, zmw = top_result['l'], top_result['name'], top_result['zmw']
+    logging.info(url)
+    return url, location_name, zmw
   
-def _json_for_url(url):
-    url = url_base % (KEY, feature, url)
+def _json_for_url(location_url):
+    url = _BASE_URL.format(key=_KEY, location_url=location_url)
     for i in range(3):
         try:
-            json_data = json.load(urlopen(url))
-            break
+            return json.load(urlopen(url))
         except URLError:
             sleep(i)
-    else:
-        raise URLError('urlopen timeout max retries')
-    return json_data
+    raise URLError('urlopen timeout max retries')
 
 def weather_for_url(url):
     return _parse_json(_json_for_url(url))
@@ -61,4 +60,4 @@ def jsonify(weather_data):
         
 if __name__ == "__main__":
     url = '/q/zmw:10027.1.99999'
-    print limit_hours(weather_for_url(url), 12)
+    print jsonify(weather_for_url(url)[:12])
