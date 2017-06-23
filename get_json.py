@@ -33,7 +33,7 @@ def parse_user_input(s):
     ''' Takes contents of 'enter zip code or city' field and gives it to the wunderground autocomplete API.
     Returns the URL path and name of the top result.
     '''
-    url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s)
+    url = 'http://autocomplete.wunderground.com/aq?query=%s' % urllib.quote(s.encode('utf-8'))
     response = load(urlopen(url))
     # will raise an IndexError if RESULTS is empty
     top_result = response['RESULTS'][0]
