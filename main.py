@@ -1,18 +1,17 @@
 import flask
+import json
 import logging
 import logging.handlers
-import re
+import os
 from flask import render_template, request, session
 from wunderground import weather_for_url, parse_user_input, jsonify
-from os import environ
 from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
-from json import loads, dumps
 
 app = flask.Flask(__name__)
-SECRET_KEY = environ.get('SECRET_KEY', 'development')
-API_KEY = environ.get('WUNDERGROUND_KEY', 'development')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
+API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
 DEBUG = True if SECRET_KEY == 'development' else False
 if not DEBUG:
     import logging
@@ -78,60 +77,94 @@ def parse_temps(weather_data, num_hours=24, units='F'):
     return temps[0], max(temps), min(temps)
 
 
+class SeanWeather:
+    def __init__(self):
+        self.data_string = ''
+        self.location = None
+        self.user_input = '10027'
+        self.num_hours = 12
+        self.current_temp = ''
+        self.max_temp = ''
+        self.min_temp = ''
+        self.icon = ''
+        self.units = 'F'
+
+    def update(self):
+        log.info('STARTING')
+        self.update_units()
+        self.update_location()
+        self.update_num_hours()
+        self.update_weather_data()
+        self.update_current_condtions()
+        log.info('FINISHED with %s' % self.user_input)
+
+    def update_units(self):
+        self.units = session.get('units', 'F')
+        new_units = request.args.get('new_units')
+        if new_units in ('C', 'F') and new_units != self.units:
+            self.units = new_units
+            session['units'] = self.units
+        log.warning('units: %s', self.units)
+
+    def update_location(self):
+        user_input = request.args.get('user_input',
+                                      session.get('user_input', '10027'))
+        self.location, self.user_input = get_location(user_input)
+        log.info('%s', self.location)
+        session['user_input'] = self.user_input
+
+    def update_num_hours(self):
+        try:
+            self.num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
+        except:
+            flask.flash('seanweather didnt like the number of hours, using 12')
+            log.error('bad number of hours')
+            self.num_hours = 12
+        session['num_hours'] = self.num_hours
+
+    def _was_recently_updated(self, max_seconds=2700):
+        return (datetime.now() - self.location.last_updated).seconds <= max_seconds
+
+    def update_weather_data(self):
+        if self.location.cache and self._was_recently_updated():
+            log.info('weather for %s was recently cached, reusing', self.location.zmw)
+        else:
+            log.info('using weather API for %s', self.location.zmw)
+            wd = weather_for_url(self.location.url, API_KEY)
+            self.location.cache = json.dumps(wd)
+            if wd:
+                self.location.last_updated = datetime.now()
+            else:
+                log.warning("didn't get any results from weather API")
+        self.location = db.session.merge(self.location)
+        db.session.add(Lookup(self.user_input, self.location))
+        db.session.commit()
+        self.weather_data = json.loads(self.location.cache)
+        self.data_string = jsonify(self.weather_data[:self.num_hours])
+
+    def update_current_condtions(self):
+        self.current_temp, self.max_temp, self.min_temp = \
+                parse_temps(self.weather_data, units=self.units)
+        self.icon = self.weather_data[0].get('icon') if self.weather_data else ''
+
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+
+
 @app.route('/', methods=['GET'])
 def home():
-    log.info('STARTING')
-    # units
-    units = session.get('units', 'F')
-    new_units = request.args.get('new_units', units)
-    if new_units != units:
-        units = new_units
-        session['units'] = units
+    sw = SeanWeather()
+    sw.update()
+    return render_template('weather_form.html', sw=sw)
 
-    # zip code
-    user_input = request.args.get('user_input',
-                                  session.get('user_input', '10027'))
-    location, user_input = get_location(user_input)
-    log.info('%s' % location)
-
-    # number of hours
-    try:
-        num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
-    except:
-        flask.flash('seanweather didnt like the number of hours, using 12')
-        num_hours = 12
-
-    if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
-        log.info('using weather API for %s' % location.zmw)
-        wd = weather_for_url(location.url, API_KEY)
-        location.cache = dumps(wd)
-        if wd:
-            location.last_updated = datetime.now()
-        else:
-            log.warning("didn't get any results from weather API")
-    else:
-        log.info('weather for %s was recently cached, reusing' % location.zmw)
-    location = db.session.merge(location)
-    db.session.add(Lookup(user_input, location))
-    db.session.commit()
-
-    weather_data = loads(location.cache)
-    current_temp, max_temp, min_temp = parse_temps(weather_data, units=units)
-    icon = weather_data[0].get('icon') if weather_data else ''
-    data_string = jsonify(weather_data[:num_hours])
-    session['user_input'] = user_input
-    session['num_hours'] = num_hours
-    session.permanent = True
-    log.info('FINISHED with %s' % user_input)
-    return render_template('weather_form.html', data_string=data_string,
-                           location=location.name, user_input=user_input,
-                           num_hours=num_hours, current_temp=current_temp,
-                           max_temp=max_temp, min_temp=min_temp, icon=icon, units=units)
 
 @app.route('/fake')
 def fake():
     log.info('STARTING -- fake')
-    ds = '''[{date: new Date(1461434400000),
+    sw = SeanWeather()
+    sw.data_string = '''[{date: new Date(1461434400000),
  icon: 'http://icons.wxug.com/i/c/k/partlycloudy.gif', icon_pos: 100, temp: 66, pop: 15, feel: 66},
 {date: new Date(1461438000000),
  icon: 'http://icons.wxug.com/i/c/k/partlycloudy.gif', icon_pos: 100, temp: 67, pop: 15, feel: 67},
@@ -155,27 +188,13 @@ def fake():
  icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 55, pop: 0, feel: 55},
 {date: new Date(1461474000000),
  icon: 'http://icons.wxug.com/i/c/k/nt_clear.gif', icon_pos: 100, temp: 53, pop: 0, feel: 53}]'''
-    icon = 'http://icons.wxug.com/i/c/k/nt_clear.gif'
-    location = '10027 -- New York, NY'
-    user_input = 'chilled'
-    num_hours = 12
-    current_temp, max_temp, min_temp = 75, 80, 65
-    units = 'F'
-    log.info('FINISHED with %s -- fake' % user_input)
-    return render_template('weather_form.html', data_string=ds,
-                           location=location, user_input=user_input,
-                           num_hours=num_hours, current_temp=current_temp,
-                           max_temp=max_temp, min_temp=min_temp, icon=icon, units=units)
-
-
-@app.route('/comment', methods=['POST'])
-def comment():
-    text = request.form['comment']
-    if text:
-        db.session.add(Comment(text))
-        db.session.commit()
-        flask.flash('We appreciate your feedback! :)')
-    return flask.redirect(flask.url_for('home'))
+    sw.icon = 'http://icons.wxug.com/i/c/k/nt_clear.gif'
+    sw.location = Location('', name='10027 -- New York, NY')
+    sw.user_input = 'chilled'
+    sw.num_hours = 12
+    sw.current_temp, sw.max_temp, sw.min_temp = 75, 80, 65
+    log.info('FINISHED with %s -- fake', sw.user_input)
+    return render_template('weather_form.html', sw=sw)
 
 
 @app.route('/discuss')
