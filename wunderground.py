@@ -83,4 +83,9 @@ if __name__ == "__main__":
     except KeyError:
         print('enter weather underground api key:')
         api_key = raw_input()
-    print(jsonify(weather_for_url(url, api_key)[:12]))
+    json_data = _json_for_url(url, api_key)
+    weather_data = _parse_json(json_data)[:12]
+    for row in weather_data:
+        print(row)
+    json_string = jsonify(weather_data)
+    print(json_string)
