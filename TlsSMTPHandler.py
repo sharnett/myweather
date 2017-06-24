@@ -1,15 +1,16 @@
 import logging.handlers
- 
+
+
 class TlsSMTPHandler(logging.handlers.SMTPHandler):
     def emit(self, record):
         """
         Emit a record.
- 
+
         Format the record and send it to the specified addressees.
         """
         try:
             import smtplib
-            import string # for tls add this line
+            import string
             try:
                 from email.utils import formatdate
             except ImportError:
@@ -25,9 +26,9 @@ class TlsSMTPHandler(logging.handlers.SMTPHandler):
                             self.getSubject(record),
                             formatdate(), msg)
             if self.username:
-                smtp.ehlo() # for tls add this line
-                smtp.starttls() # for tls add this line
-                smtp.ehlo() # for tls add this line
+                smtp.ehlo()
+                smtp.starttls()
+                smtp.ehlo()
                 smtp.login(self.username, self.password)
             smtp.sendmail(self.fromaddr, self.toaddrs, msg)
             smtp.quit()

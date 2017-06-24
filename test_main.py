@@ -1,5 +1,6 @@
 import main as seanweather
 
+
 def test_parse_temps():
     weather_data = [{'temp': '83', 'temp_c': '28'},
                     {'temp': '81', 'temp_c': '27'},

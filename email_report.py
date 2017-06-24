@@ -7,11 +7,12 @@ from sqlite3 import connect
 from os.path import dirname, abspath
 from dateutil.parser import parse
 
+
 def send_mail(data):
     mailhost, fromaddr, toaddrs, subject, credentials = email_credentials()
     username, password = credentials
     subject = 'seanweather daily report'
-    body = 'Here are some interesting results, my good-looking friend:\n\n' + data
+    body = 'Here is some interesting data, my good-looking friend:\n\n' + data
     msg = MIMEText(body, _charset="UTF-8")
     msg['Subject'] = Header(subject, "utf-8")
     server = smtplib.SMTP(mailhost)
@@ -20,13 +21,18 @@ def send_mail(data):
     server.sendmail(fromaddr, toaddrs, msg.as_string())
     server.quit()
 
+
 def gather_data(cur):
-    query = 'select count(*) as c, name from lookup group by name order by c desc'
-    return '\n'.join('{:>3} {}'.format(*result) for result in cur.execute(query))
+    query = ('select count(*) as c, name '
+             'from lookup group by name order by c desc')
+    return ('\n'.join('{:>3} {}'
+            .format(*result) for result in cur.execute(query)))
+
 
 def clean_up(cur):
     cur.execute('delete from lookup')
-    cur.execute('update location set cache="" where julianday(last_updated) < julianday()-1')
+    cur.execute('update location set cache="" '
+                'where julianday(last_updated) < julianday()-1')
 
 if __name__ == '__main__':
     directory = dirname(abspath(__file__))

@@ -16,7 +16,7 @@ if __name__ == '__main__':
         cache = dumps(weather_for_url(url))
         last_updated = datetime.now()
         c.execute('update location set cache=?, last_updated=? where zmw=?',
-                (cache, last_updated, zmw))
+                  (cache, last_updated, zmw))
 
     conn.commit()
     conn.close()
