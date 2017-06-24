@@ -12,6 +12,7 @@ from json import loads, dumps
 
 app = flask.Flask(__name__)
 SECRET_KEY = environ.get('SECRET_KEY', 'development')
+API_KEY = environ.get('WUNDERGROUND_KEY', 'development')
 DEBUG = True if SECRET_KEY == 'development' else False
 if not DEBUG:
     import logging
@@ -102,7 +103,7 @@ def home():
 
     if (datetime.now()-location.last_updated).seconds > 2700 or len(location.cache) == 0:
         log.info('using weather API for %s' % location.zmw)
-        wd = weather_for_url(location.url)
+        wd = weather_for_url(location.url, API_KEY)
         location.cache = dumps(wd)
         if wd:
             location.last_updated = datetime.now()
@@ -116,7 +117,7 @@ def home():
 
     weather_data = loads(location.cache)
     current_temp, max_temp, min_temp = parse_temps(weather_data, units=units)
-    icon = weather_data[0].get('icon')
+    icon = weather_data[0].get('icon') if weather_data else ''
     data_string = jsonify(weather_data[:num_hours])
     session['user_input'] = user_input
     session['num_hours'] = num_hours

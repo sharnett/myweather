@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import logging
 import urllib
@@ -8,24 +9,26 @@ from time import sleep
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
-_KEY = environ['WUNDERGROUND_KEY']
 _BASE_URL = 'http://api.wunderground.com/api/{key}/hourly10day{location_url}.json'
 
 def _parse_json(json_data):
-    w = json_data
-    if not 'hourly_forecast' in w or not w['hourly_forecast']:
-        return ''
-    def get_row(f):
+    ''' Parse json returned from wunderground API into list of dicts with
+        only the data we care about.
+    '''
+    if not 'hourly_forecast' in json_data or not json_data['hourly_forecast']:
+        logging.error('json data is ill-formed')
+        return []
+    def get_dict(row):
         return dict(
-            date=int(f['FCTTIME']['epoch'])*1000,
-            icon=f['icon_url'],
+            date=int(row['FCTTIME']['epoch'])*1000,
+            icon=row['icon_url'],
             icon_pos=100,
-            pop=f['pop'],                   # probability of precipitation
-            temp=f['temp']['english'],      # temperature in Fahrenheit
-            temp_c=f['temp']['metric'],     # Celsius
-            feel=f['feelslike']['english'], # temperature it feels like, in Fahrenheit
-            feel_c=f['feelslike']['metric'])
-    return [get_row(f) for f in w['hourly_forecast']]
+            pop=row['pop'],                   # probability of precipitation
+            temp=row['temp']['english'],      # temperature in Fahrenheit
+            temp_c=row['temp']['metric'],     # Celsius
+            feel=row['feelslike']['english'], # temperature it feels like, in Fahrenheit
+            feel_c=row['feelslike']['metric'])
+    return [get_dict(row) for row in json_data['hourly_forecast']]
 
 def parse_user_input(s):
     ''' Takes contents of 'enter zip code or city' field and gives it to the wunderground autocomplete API.
@@ -40,8 +43,11 @@ def parse_user_input(s):
     logging.info(url)
     return url, location_name, zmw
   
-def _json_for_url(location_url):
-    url = _BASE_URL.format(key=_KEY, location_url=location_url)
+def _json_for_url(location_url, api_key):
+    if api_key == 'development':
+        logging.error('You need to set WUNDERGROUND_KEY in your environment')
+        return {}
+    url = _BASE_URL.format(key=api_key, location_url=location_url)
     for i in range(3):
         try:
             return json.load(urlopen(url))
@@ -49,8 +55,8 @@ def _json_for_url(location_url):
             sleep(i)
     raise URLError('urlopen timeout max retries')
 
-def weather_for_url(url):
-    return _parse_json(_json_for_url(url))
+def weather_for_url(url, api_key):
+    return _parse_json(_json_for_url(url, api_key))
 
 def jsonify(weather_data):
     row_string = ("{{date: new Date({date}), icon: '{icon}', icon_pos: {icon_pos}, " +
@@ -60,4 +66,9 @@ def jsonify(weather_data):
         
 if __name__ == "__main__":
     url = '/q/zmw:10027.1.99999'
-    print jsonify(weather_for_url(url)[:12])
+    try:
+        api_key = environ['WUNDERGROUND_KEY']
+    except KeyError:
+        print('enter weather underground api key:')
+        api_key = raw_input()
+    print(jsonify(weather_for_url(url, api_key)[:12]))
