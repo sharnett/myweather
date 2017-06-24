@@ -9,6 +9,10 @@ from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
 
+_DEFAULT_NUM_HOURS = 12
+_DEFAULT_UNITS = 'F'
+_DEFAULT_USER_INPUT = '10027'
+
 app = flask.Flask(__name__)
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
 API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
@@ -52,21 +56,21 @@ def get_location(user_input):
     try:
         url, location_name, zmw = parse_user_input(user_input)
         log.info('got location info from autocomplete API')
-        log.info('%s -> %s, %s, %s' % (user_input, url, location_name, zmw))
+        log.info('%s -> %s, %s, %s', user_input, url, location_name, zmw)
         return Location(zmw, url=url, name=location_name), user_input
     except IndexError, KeyError:
         flask.flash('seanweather didnt like that, please try another city or zipcode')
-        log.warning('failed to parse: %s. Using 10027' % user_input)
-        last_default = Lookup.query.filter_by(user_input='10027').order_by(Lookup.date.desc()).first()
+        log.warning('failed to parse: %s. Using %s', user_input, _DEFAULT_USER_INPUT)
+        last_default = Lookup.query.filter_by(user_input=_DEFAULT_USER_INPUT).order_by(Lookup.date.desc()).first()
         if last_default is not None:
             location = last_default.location
         else:
             url, location_name, zmw = '/q/zmw:10027.1.99999', '10027 - New York, NY', '10027.1.99999'
             location = Location(zmw, url=url, name=location_name)
-        return location, '10027'
+        return location, _DEFAULT_USER_INPUT
 
 
-def parse_temps(weather_data, num_hours=24, units='F'):
+def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
     ''' Get current temp, and min/max temps over the next num_hours '''
     temps = []
     key = 'temp_c' if units == 'C' else 'temp'
@@ -77,50 +81,51 @@ def parse_temps(weather_data, num_hours=24, units='F'):
     return temps[0], max(temps), min(temps)
 
 
-class SeanWeather:
+class SeanWeather(object):
     def __init__(self):
         self.data_string = ''
         self.location = None
-        self.user_input = '10027'
-        self.num_hours = 12
+        self.user_input = _DEFAULT_USER_INPUT
+        self.num_hours = _DEFAULT_NUM_HOURS
         self.current_temp = ''
         self.max_temp = ''
         self.min_temp = ''
         self.icon = ''
-        self.units = 'F'
+        self.units = _DEFAULT_UNITS
+        self.previous = None
 
     def update(self):
         log.info('STARTING')
+        self.previous = session.get('sw', dict(units=_DEFAULT_UNITS,
+            user_input=_DEFAULT_USER_INPUT, num_hours=_DEFAULT_NUM_HOURS))
         self.update_units()
         self.update_location()
         self.update_num_hours()
         self.update_weather_data()
         self.update_current_condtions()
+        session['sw'] = dict(units=self.units, user_input=self.user_input,
+                num_hours=self.num_hours)
         log.info('FINISHED with %s' % self.user_input)
 
     def update_units(self):
-        self.units = session.get('units', 'F')
+        self.units = self.previous['units']
         new_units = request.args.get('new_units')
         if new_units in ('C', 'F') and new_units != self.units:
             self.units = new_units
-            session['units'] = self.units
         log.warning('units: %s', self.units)
 
     def update_location(self):
-        user_input = request.args.get('user_input',
-                                      session.get('user_input', '10027'))
+        user_input = request.args.get('user_input', self.previous['user_input'])
         self.location, self.user_input = get_location(user_input)
         log.info('%s', self.location)
-        session['user_input'] = self.user_input
 
     def update_num_hours(self):
         try:
-            self.num_hours = int(request.args.get('num_hours', session.get('num_hours', 12)))
+            self.num_hours = int(request.args.get('num_hours', self.previous['num_hours']))
         except:
-            flask.flash('seanweather didnt like the number of hours, using 12')
+            flask.flash('seanweather didnt like the number of hours, using %s', _DEFAULT_NUM_HOURS)
             log.error('bad number of hours')
-            self.num_hours = 12
-        session['num_hours'] = self.num_hours
+            self.num_hours = _DEFAULT_NUM_HOURS
 
     def _was_recently_updated(self, max_seconds=2700):
         return (datetime.now() - self.location.last_updated).seconds <= max_seconds
