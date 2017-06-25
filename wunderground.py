@@ -2,8 +2,8 @@ from __future__ import print_function
 import json
 import logging
 import urllib
-from urllib2 import urlopen, URLError
 from os import environ
+from urllib2 import urlopen, URLError
 from time import sleep
 
 logging.basicConfig()
@@ -34,22 +34,19 @@ def _parse_json(json_data):
     return [get_dict(row) for row in json_data['hourly_forecast']]
 
 
-def parse_user_input(s):
+def autocomplete_user_input(user_input):
     ''' Takes contents of 'enter zip code or city' field and gives it to the
-    wunderground autocomplete API. Returns the URL path and name of the top
+    wunderground autocomplete API. Returns the url and name of the top
     result, e.g.
 
-    '/q/zmw:10027.1.99999', '10027 - New York, NY', '10027.1.99999'
+    '/q/zmw:10027.1.99999', '10027 - New York, NY',
     '''
     url = ('http://autocomplete.wunderground.com/aq?query=%s'
-           % urllib.quote(s.encode('utf-8')))
+           % urllib.quote(user_input.encode('utf-8')))
     response = json.load(urlopen(url))
     # will raise an IndexError if RESULTS is empty
     top_result = response['RESULTS'][0]
-    url, location_name, zmw = (top_result['l'], top_result['name'],
-                               top_result['zmw'])
-    logging.info(url)
-    return url, location_name, zmw
+    return top_result['l'], top_result['name']
 
 
 def _json_for_url(location_url, api_key):

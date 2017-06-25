@@ -4,7 +4,7 @@ import logging
 import logging.handlers
 import os
 from flask import render_template, request, session
-from wunderground import weather_for_url, parse_user_input, jsonify
+from wunderground import weather_for_url, autocomplete_user_input, jsonify
 from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
@@ -57,10 +57,11 @@ def get_location(user_input):
         log.info('got location info from the cache')
         return last_lookup.location, user_input
     try:
-        url, location_name, zmw = parse_user_input(user_input)
+        url, name = autocomplete_user_input(user_input)
+        location = Location(url, name=name)
         log.info('got location info from autocomplete API')
-        log.info('%s -> %s, %s, %s', user_input, url, location_name, zmw)
-        return Location(zmw, url=url, name=location_name), user_input
+        log.info('%s -> %s, %s', user_input, location.url, location.name)
+        return location, user_input
     except IndexError, KeyError:
         flask.flash('seanweather didnt like that, please try another city or '
                     'zipcode')
@@ -71,9 +72,8 @@ def get_location(user_input):
         if last_default is not None:
             location = last_default.location
         else:
-            url, location_name, zmw = ('/q/zmw:10027.1.99999',
-                                       '10027 - New York, NY', '10027.1.99999')
-            location = Location(zmw, url=url, name=location_name)
+            location = Location('/q/zmw:10027.1.99999',
+                                name='10027 -- New York, NY')
         return location, _DEFAULT_USER_INPUT
 
 
@@ -146,9 +146,9 @@ class SeanWeather(object):
     def update_weather_data(self):
         if self.location.cache and self._was_recently_updated():
             log.info('weather for %s was recently cached, reusing',
-                     self.location.zmw)
+                     self.location.name)
         else:
-            log.info('using weather API for %s', self.location.zmw)
+            log.info('using weather API for %s', self.location.name)
             wd = weather_for_url(self.location.url, API_KEY)
             self.location.cache = json.dumps(wd)
             if wd:

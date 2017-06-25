@@ -5,22 +5,35 @@ db = SQLAlchemy()
 
 
 class Location(db.Model):
-    zmw = db.Column(db.String, primary_key=True)
+    url = db.Column(db.String, primary_key=True)
     name = db.Column(db.String)
-    url = db.Column(db.String)
     cache = db.Column(db.String)
     last_updated = db.Column(db.DateTime)
+    country = db.Column(db.String)
+    city = db.Column(db.String)
+    state = db.Column(db.String)
+    zipcode = db.Column(db.String)
 
-    def __init__(self, zmw, name='', url='', cache=''):
-        self.zmw = zmw
-        self.name = name
+    def __init__(self, url, cache='', country='', city='', state='',
+                 zipcode='', name=''):
         self.url = url
         self.cache = cache
         self.last_updated = (datetime.now() if cache
                              else datetime.fromtimestamp(0))
+        self.country = country
+        self.city = city
+        self.state = state
+        self.zipcode = zipcode
+        if name:
+            self.name = name
+        else:
+            if zipcode and state:
+                self.name = '%s -- %s, %s' % (zipcode, city, state)
+            else:
+                self.name = '%s, %s' % (city, country)
 
     def __repr__(self):
-        return '<Location %r, %r>' % (self.zmw, self.name)
+        return '<Location %r, %r>' % (self.name, self.url)
 
 
 class Lookup(db.Model):

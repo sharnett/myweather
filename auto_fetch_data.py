@@ -11,12 +11,11 @@ if __name__ == '__main__':
     c = conn.cursor()
     zipcodes = {'10003', '12180', '11105', '11215'}
     for z in zipcodes:
-        zmw = '%s.1.99999' % z
-        url = '/q/zmw:%s' % zmw
+        url = '/q/zmw:%s.1.99999' % z
         cache = dumps(weather_for_url(url))
         last_updated = datetime.now()
-        c.execute('update location set cache=?, last_updated=? where zmw=?',
-                  (cache, last_updated, zmw))
+        c.execute('update location set cache=?, last_updated=? where url=?',
+                  (cache, last_updated, url))
 
     conn.commit()
     conn.close()
