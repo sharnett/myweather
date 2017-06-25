@@ -27,7 +27,7 @@ class Location(db.Model):
         if name:
             self.name = name
         else:
-            if zipcode and state:
+            if country in {'US', 'USA'}:
                 self.name = '%s -- %s, %s' % (zipcode, city, state)
             else:
                 self.name = '%s, %s' % (city, country)
