@@ -3,16 +3,15 @@ import json
 import logging
 import logging.handlers
 import os
-from datetime import datetime
 from flask import render_template, request, session
+from wunderground import weather_for_url, autocomplete_user_input, jsonify
 from os.path import dirname, abspath, isfile
-
-import wunderground as wg
 from database import db, Location, Lookup
+from datetime import datetime
 
 _DEFAULT_NUM_HOURS = 12
 _DEFAULT_UNITS = 'F'
-_DEFAULT_USER_INPUT = ''
+_DEFAULT_USER_INPUT = '10027'
 
 app = flask.Flask(__name__)
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
@@ -48,31 +47,8 @@ def main():
     app.run(host='0.0.0.0')
 
 
-def _get_default_location():
-    last_default = (Lookup.query.filter_by(user_input=_DEFAULT_USER_INPUT)
-                    .order_by(Lookup.date.desc()).first())
-    if last_default is not None:
-        location = last_default.location
-    else:
-        location = Location('/q/zmw:10027.1.99999',
-                            name='10027 -- New York, NY')
-    return location, _DEFAULT_USER_INPUT
-
-
 def get_location(user_input):
-    ''' if blank, use autoip. Otherwise, check cache. If cache is missing or
-        too old, use autocomplete API.
-    '''
-    if not user_input:
-        ip = request.remote_addr
-        log.info('trying autoip geolookup for %s', ip)
-        location_dict = wg.autoip(API_KEY, ip)
-        if not location_dict:
-            return _get_default_location()
-        location = Location(location_dict['url'], **location_dict)
-        log.info('got %s from autoip geolookup', location.name)
-        return location, location.name
-
+    ''' first check cache. if missing or too old, use autocomplete API '''
     last_lookup = (Lookup.query.filter_by(user_input=user_input)
                    .order_by(Lookup.date.desc()).first())
     log.info('db result for location: ' + str(last_lookup))
@@ -81,7 +57,7 @@ def get_location(user_input):
         log.info('got location info from the cache')
         return last_lookup.location, user_input
     try:
-        url, name = wg.autocomplete_user_input(user_input)
+        url, name = autocomplete_user_input(user_input)
         location = Location(url, name=name)
         log.info('got location info from autocomplete API')
         log.info('%s -> %s, %s', user_input, location.url, location.name)
@@ -91,7 +67,14 @@ def get_location(user_input):
                     'zipcode')
         log.warning('failed to parse: %s. Using %s', user_input,
                     _DEFAULT_USER_INPUT)
-        return _get_default_location()
+        last_default = (Lookup.query.filter_by(user_input=_DEFAULT_USER_INPUT)
+                        .order_by(Lookup.date.desc()).first())
+        if last_default is not None:
+            location = last_default.location
+        else:
+            location = Location('/q/zmw:10027.1.99999',
+                                name='10027 -- New York, NY')
+        return location, _DEFAULT_USER_INPUT
 
 
 def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
@@ -166,7 +149,7 @@ class SeanWeather(object):
                      self.location.name)
         else:
             log.info('using weather API for %s', self.location.name)
-            wd = wg.weather_for_url(self.location.url, API_KEY)
+            wd = weather_for_url(self.location.url, API_KEY)
             self.location.cache = json.dumps(wd)
             if wd:
                 self.location.last_updated = datetime.now()
@@ -176,7 +159,7 @@ class SeanWeather(object):
         db.session.add(Lookup(self.user_input, self.location))
         db.session.commit()
         self.weather_data = json.loads(self.location.cache)
-        self.data_string = wg.jsonify(self.weather_data[:self.num_hours])
+        self.data_string = jsonify(self.weather_data[:self.num_hours])
 
     def update_current_condtions(self):
         self.current_temp, self.max_temp, self.min_temp = \
@@ -238,7 +221,7 @@ def fake():
             {'temp': u'73', 'feel': u'73', 'pop': u'3', 'icon_pos': 100,
                 'feel_c': u'23', 'temp_c': u'23', 'date': 1498374000000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'}]
-    sw.data_string = wg.jsonify(sw.weather_data)
+    sw.data_string = jsonify(sw.weather_data)
     sw.icon = 'http://icons.wxug.com/i/c/k/nt_clear.gif'
     sw.location = Location('', name='10027 -- New York, NY')
     sw.user_input = 'chilled'

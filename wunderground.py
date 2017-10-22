@@ -10,7 +10,7 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 
 _BASE_URL = \
-        'http://api.wunderground.com/api/{key}/{method}{location_url}.json'
+        'http://api.wunderground.com/api/{key}/hourly10day{location_url}.json'
 
 
 def _parse_json(json_data):
@@ -34,21 +34,6 @@ def _parse_json(json_data):
     return [get_dict(row) for row in json_data['hourly_forecast']]
 
 
-def autoip(api_key, ip):
-    ''' Returns dictionary with location info from autoip geolookup '''
-    url_suffix = '/q/autoip.json?geo_ip=%s' % ip
-    url = _BASE_URL.format(key=api_key, method='geolookup',
-                           location_url=url_suffix)
-    response = json.load(urlopen(url))
-    if 'location' not in response:
-        log.warning('autoip geolookup failed to get a location')
-        return {}
-    location = response['location']
-    return dict(url=location['l'], state=location['state'],
-                zipcode=location['zip'], city=location['city'],
-                country=location['country'])
-
-
 def autocomplete_user_input(user_input):
     ''' Takes contents of 'enter zip code or city' field and gives it to the
     wunderground autocomplete API. Returns the url and name of the top
@@ -68,8 +53,7 @@ def _json_for_url(location_url, api_key):
     if api_key == 'development':
         logging.error('You need to set WUNDERGROUND_KEY in your environment')
         return {}
-    url = _BASE_URL.format(key=api_key, method='hourly10day',
-                           location_url=location_url)
+    url = _BASE_URL.format(key=api_key, location_url=location_url)
     for i in range(3):
         try:
             return json.load(urlopen(url))
