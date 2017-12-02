@@ -48,18 +48,28 @@ def main():
 
 
 def get_location(user_input):
-    ''' first check cache. if missing or too old, use autocomplete API '''
+    ''' Get the Location corresponding the user input
+
+    First, we look for the user_input in the Lookup table. If there was a
+    previous lookup, return the corresponding location.
+
+    If not, use the autocomplete API to get the url. If that url exists in the
+    Location table, return that location.
+
+    Otherwise, create and return a new Location built from the results of the
+    autocomplete API.
+    '''
     last_lookup = (Lookup.query.filter_by(user_input=user_input)
                    .order_by(Lookup.date.desc()).first())
-    log.info('db result for location: ' + str(last_lookup))
+    log.info('db result for most recent lookup of this location: ' + str(last_lookup))
     if (last_lookup is not None and
             (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
-        log.info('got location info from the cache')
+        log.info('got location info from the cache of a previous lookup')
         return last_lookup.location, user_input
     try:
         url, name = autocomplete_user_input(user_input)
         log.info('got location info from autocomplete API')
-        log.info('%s -> %s, %s', user_input, location.url, location.name)
+        log.info('%s -> %s, %s', user_input, url, name)
         existing_location = Location.query.get(url)
         if existing_location is None:
             log.info('no info for that location, creating a new entry')
@@ -154,6 +164,9 @@ class SeanWeather(object):
             log.info('weather for %s was recently cached, reusing',
                      self.location.name)
         else:
+            num_secs = (datetime.now() - self.location.last_updated).seconds
+            log.info('%d chars in cache, %ds since last update'
+                     % (len(self.location.cache), num_secs))
             log.info('using weather API for %s', self.location.name)
             wd = weather_for_url(self.location.url, API_KEY)
             self.location.cache = json.dumps(wd)
