@@ -1,8 +1,8 @@
-import sqlalchemy
 import json
-from wunderground import weather_for_url, autocomplete_user_input
-from os.path import dirname, abspath
+import os
+import sqlalchemy
 from database import Location
+from wunderground import weather_for_url, autocomplete_user_input
 
 API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
 SQLALCHEMY_DATABASE_URI = 'sqlite:///db.db'
