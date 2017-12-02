@@ -53,14 +53,20 @@ def get_location(user_input):
                    .order_by(Lookup.date.desc()).first())
     log.info('db result for location: ' + str(last_lookup))
     if (last_lookup is not None and
-            (datetime.now()-last_lookup.date).seconds < 604800):
+            (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
         log.info('got location info from the cache')
         return last_lookup.location, user_input
     try:
         url, name = autocomplete_user_input(user_input)
-        location = Location(url, name=name)
         log.info('got location info from autocomplete API')
         log.info('%s -> %s, %s', user_input, location.url, location.name)
+        existing_location = Location.query.get(url)
+        if existing_location is None:
+            log.info('no info for that location, creating a new entry')
+            location = Location(url, name=name)
+        else:
+            log.info('already have info for that location, reusing it')
+            location = existing_location
         return location, user_input
     except IndexError, KeyError:
         flask.flash('seanweather didnt like that, please try another city or '
