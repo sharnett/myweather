@@ -4,7 +4,7 @@ import logging
 import logging.handlers
 import os
 from flask import render_template, request, session
-from wunderground import weather_for_url, autocomplete_user_input, jsonify
+from wunderground import weather_for_url, autocomplete_user_input
 from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
@@ -253,6 +253,15 @@ def fake():
 @app.route('/discuss')
 def discuss():
     return render_template('discuss.html')
+
+
+def jsonify(weather_data):
+    row_string = ("{{date: new Date({date}), icon: '{icon}', "
+                  "icon_pos: {icon_pos}, temp: {temp}, pop: {pop}, "
+                  "feel: {feel}, temp_c: {temp_c}, feel_c: {feel_c}}}")
+    stringified = [row_string.format(**row) for row in weather_data]
+    return "[" + ",\n".join(stringified) + "]"
+
 
 if __name__ == '__main__':
     main()

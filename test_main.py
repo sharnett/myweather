@@ -19,3 +19,35 @@ def test_parse_temps():
     assert c_current == 28
     assert c_max == 29
     assert c_min == 27
+
+
+def test_jsonify():
+    weather_data = [
+    dict(
+        date=1498165200000,
+        icon="fake_url",
+        icon_pos=100,
+        pop=0,
+        temp=83,
+        temp_c=28,
+        feel=83,
+        feel_c=28),
+    dict(
+        date=1498168800000,
+        icon="fake_url",
+        icon_pos=100,
+        pop=0,
+        temp=81,
+        temp_c=27,
+        feel=81,
+        feel_c=27)
+    ]
+    actual = seanweather.jsonify(weather_data)
+    expected1 = ("{date: new Date(1498165200000), icon: 'fake_url', "
+                 "icon_pos: 100, temp: 83, pop: 0, feel: 83, temp_c: 28, "
+                 "feel_c: 28}")
+    expected2 = ("{date: new Date(1498168800000), icon: 'fake_url', "
+                 "icon_pos: 100, temp: 81, pop: 0, feel: 81, temp_c: 27, "
+                 "feel_c: 27}")
+    expected = '[' + expected1 + ',\n' + expected2 + ']'
+    assert actual == expected

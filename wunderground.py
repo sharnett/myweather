@@ -4,13 +4,10 @@ import logging
 import urllib
 from os import environ
 from urllib2 import urlopen, URLError
-from time import sleep
+import time
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
-
-_BASE_URL = \
-        'http://api.wunderground.com/api/{key}/hourly10day{location_url}.json'
 
 
 def _parse_json(json_data):
@@ -34,7 +31,7 @@ def _parse_json(json_data):
     return [get_dict(row) for row in json_data['hourly_forecast']]
 
 
-def autocomplete_user_input(user_input):
+def autocomplete_user_input(user_input, opener=urlopen):
     ''' Takes contents of 'enter zip code or city' field and gives it to the
     wunderground autocomplete API. Returns the url and name of the top
     result, e.g.
@@ -43,35 +40,30 @@ def autocomplete_user_input(user_input):
     '''
     url = ('http://autocomplete.wunderground.com/aq?query=%s'
            % urllib.quote(user_input.encode('utf-8')))
-    response = json.load(urlopen(url))
+    response = json.load(opener(url))
     # will raise an IndexError if RESULTS is empty
     top_result = response['RESULTS'][0]
     return top_result['l'], top_result['name']
 
 
-def _json_for_url(location_url, api_key):
+def _json_for_url(location_url, api_key, opener=urlopen):
     if api_key == 'development':
         logging.error('You need to set WUNDERGROUND_KEY in your environment')
         return {}
-    url = _BASE_URL.format(key=api_key, location_url=location_url)
+    base_url = (
+        'http://api.wunderground.com/api/{key}/hourly10day{location_url}.json')
+    url = base_url.format(key=api_key, location_url=location_url)
     for i in range(3):
         try:
-            return json.load(urlopen(url))
+            return json.load(opener(url))
         except URLError:
-            sleep(i)
+            time.sleep(i)
     raise URLError('urlopen timeout max retries')
 
 
 def weather_for_url(url, api_key):
     return _parse_json(_json_for_url(url, api_key))
 
-
-def jsonify(weather_data):
-    row_string = ("{{date: new Date({date}), icon: '{icon}', "
-                  "icon_pos: {icon_pos}, temp: {temp}, pop: {pop}, "
-                  "feel: {feel}, temp_c: {temp_c}, feel_c: {feel_c}}}")
-    stringified = [row_string.format(**row) for row in weather_data]
-    return "[" + ",\n".join(stringified) + "]"
 
 if __name__ == "__main__":
     url = '/q/zmw:10027.1.99999'
@@ -84,5 +76,3 @@ if __name__ == "__main__":
     weather_data = _parse_json(json_data)[:12]
     for row in weather_data:
         print(row)
-    json_string = jsonify(weather_data)
-    print(json_string)
