@@ -1,5 +1,8 @@
-import main as seanweather
+import json
+import pytest
 
+from database import Location, Lookup
+import main as seanweather
 
 def test_parse_temps():
     weather_data = [{'temp': '83', 'temp_c': '28'},
@@ -51,3 +54,116 @@ def test_jsonify():
                  "feel_c: 27}")
     expected = '[' + expected1 + ',\n' + expected2 + ']'
     assert actual == expected
+
+
+@pytest.fixture
+def app():
+    seanweather.app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite://"
+    seanweather.app.config['TESTING'] = True
+    return seanweather.app
+
+@pytest.fixture
+def db(app):
+    seanweather.db.app = app
+    seanweather.db.create_all()
+    yield seanweather.db
+    seanweather.db.drop_all()
+
+@pytest.fixture(scope='function')
+def session(db):
+    connection = db.engine.connect()
+    transaction = connection.begin()
+    db.session = db.create_scoped_session(options=dict(bind=connection))
+
+    yield db.session
+
+    transaction.rollback()
+    connection.close()
+    db.session.remove()
+
+
+def _add_lookup(session, user_input='', url='', name='', cache=''):
+    location = session.merge(Location(url, name, cache=cache))
+    session.add(Lookup(user_input, location))
+    session.commit()
+
+def test_get_location_lookup_table(session):
+    _add_lookup(session, user_input='Boston', url='/q/boston',
+        name='Boston, Massachusetts')
+    _add_lookup(session, user_input='New York', url='/q/nyc',
+        name='New York, New York')
+
+    location, _ = seanweather.get_location('New York', None)
+    assert location.name == 'New York, New York'
+
+    location, _ = seanweather.get_location('Boston', None)
+    assert location.name == 'Boston, Massachusetts'
+
+PARIS_JSON = json.dumps({"RESULTS": [
+    {
+        "name": "Paris, France",
+        "type": "city",
+        "c": "FR",
+        "zmw": "00000.45.07156",
+        "tz": "Europe / Paris",
+        "tzs": "CET",
+        "l": "/q/zmw:00000.45.07156",
+        "ll": "48.860001 2.350000",
+        "lat": "48.860001",
+        "lon": "2.350000"
+    },
+]})
+
+def test_get_location_autocomplete_new(session):
+    ''' The user input isn't in the (empty) Lookup table, so it checks
+        the autocomplete API instead, which returns some json for Paris.
+        Paris isn't in the Location table so it returns a new Location built
+        from the Paris json.
+    '''
+    def opener(url):
+        def inner():
+            pass
+        inner.read = lambda: PARIS_JSON
+        return inner
+    location, _ = seanweather.get_location('fake user input', opener)
+    assert location.name == 'Paris, France'
+
+def test_get_location_autocomplete_reuse(session):
+    ''' The user input isn't in the (empty) Lookup table, so it checks the
+        autocomplete API instead, which returns some json for Paris. The url
+        from that json *is* in the Location table so it returns that Location
+        and ignores the Paris json.
+    '''
+    def opener(url):
+        def inner():
+            pass
+        inner.read = lambda: PARIS_JSON
+        return inner
+    fake_location_name = 'Fake Paris'
+    real_paris_url = '/q/zmw:00000.45.07156' # compare this to the paris JSON above
+    _add_lookup(session, user_input='fake user input', url=real_paris_url,
+        name=fake_location_name)
+
+    location, _ = seanweather.get_location('Boston', opener)
+    assert location.name == fake_location_name
+
+def test_get_location_default_nocache(session):
+    ''' The autocomplete API returns nothing and raises an IndexError. With nothing
+        in the database, it returns the default location with no cache.
+    '''
+    location, _ = seanweather.get_location('Boston', lambda url: [][0])
+    assert location.name == seanweather._DEFAULT_LOCATION_NAME
+    assert location.cache == ''
+
+def test_get_location_default_cache(session):
+    ''' The autocomplete API returns nothing and raises an IndexError. But there is
+        an entry for the default Location in the db, so it returns that (with its cache)
+    '''
+    cache = 'old weather data'
+    _add_lookup(session, user_input='New York', url=seanweather._DEFAULT_LOCATION_URL,
+        name=seanweather._DEFAULT_LOCATION_NAME, cache=cache)
+    def opener(url):
+        raise IndexError
+    location, _ = seanweather.get_location('Boston', lambda url: [][0])
+    assert location.name == seanweather._DEFAULT_LOCATION_NAME
+    assert location.cache == cache
