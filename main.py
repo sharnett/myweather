@@ -8,10 +8,14 @@ from wunderground import weather_for_url, autocomplete_user_input
 from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
+from urllib2 import urlopen
 
 _DEFAULT_NUM_HOURS = 12
 _DEFAULT_UNITS = 'F'
 _DEFAULT_USER_INPUT = '10027'
+_DEFAULT_LOCATION_URL = '/q/zmw:10027.1.99999'
+_DEFAULT_LOCATION_NAME = '10027 -- New York, NY'
+_DEFAULT_LOCATION = Location(_DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME)
 
 app = flask.Flask(__name__)
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
@@ -47,8 +51,11 @@ def main():
     app.run(host='0.0.0.0')
 
 
-def get_location(user_input):
+def get_location(user_input, opener=urlopen):
     ''' Get the Location corresponding the user input
+
+    Locations are keyed by url and cache their weather data, which we want
+    to use if we can.
 
     First, we look for the user_input in the Lookup table. If there was a
     previous lookup, return the corresponding location.
@@ -58,6 +65,8 @@ def get_location(user_input):
 
     Otherwise, create and return a new Location built from the results of the
     autocomplete API.
+
+    If the autocomplete API fails, return a default location.
     '''
     last_lookup = (Lookup.query.filter_by(user_input=user_input)
                    .order_by(Lookup.date.desc()).first())
@@ -67,29 +76,25 @@ def get_location(user_input):
         log.info('got location info from the cache of a previous lookup')
         return last_lookup.location, user_input
     try:
-        url, name = autocomplete_user_input(user_input)
+        url, name = autocomplete_user_input(user_input, opener=opener)
         log.info('got location info from autocomplete API')
         log.info('%s -> %s, %s', user_input, url, name)
-        existing_location = Location.query.get(url)
-        if existing_location is None:
+        location = Location.query.get(url)
+        if location is None:
             log.info('no info for that location, creating a new entry')
-            location = Location(url, name=name)
+            location = Location(url, name)
         else:
             log.info('already have info for that location, reusing it')
-            location = existing_location
         return location, user_input
     except IndexError, KeyError:
         flask.flash('seanweather didnt like that, please try another city or '
                     'zipcode')
         log.warning('failed to parse: %s. Using %s', user_input,
                     _DEFAULT_USER_INPUT)
-        last_default = (Lookup.query.filter_by(user_input=_DEFAULT_USER_INPUT)
-                        .order_by(Lookup.date.desc()).first())
-        if last_default is not None:
-            location = last_default.location
-        else:
-            location = Location('/q/zmw:10027.1.99999',
-                                name='10027 -- New York, NY')
+        # Check for a default in the db so we can make use of any existing cache
+        location = Location.query.get(_DEFAULT_LOCATION_URL)
+        if location is None:
+            location = _DEFAULT_LOCATION
         return location, _DEFAULT_USER_INPUT
 
 
@@ -181,8 +186,8 @@ class SeanWeather(object):
         self.data_string = jsonify(self.weather_data[:self.num_hours])
 
     def update_current_condtions(self):
-        self.current_temp, self.max_temp, self.min_temp = \
-                parse_temps(self.weather_data, units=self.units)
+        self.current_temp, self.max_temp, self.min_temp = parse_temps(
+            self.weather_data, units=self.units)
         self.icon = (self.weather_data[0].get('icon')
                      if self.weather_data else '')
 
