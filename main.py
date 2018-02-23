@@ -9,6 +9,7 @@ from os.path import dirname, abspath, isfile
 from database import db, Location, Lookup
 from datetime import datetime
 from urllib2 import urlopen
+from collections import namedtuple
 
 _DEFAULT_NUM_HOURS = 12
 _DEFAULT_UNITS = 'F'
@@ -21,7 +22,10 @@ app = flask.Flask(__name__)
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
 API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
 DEBUG = True if SECRET_KEY == 'development' else False
-if not DEBUG:
+if DEBUG:
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(logging.INFO)
+else:
     import logging
     from TlsSMTPHandler import TlsSMTPHandler
     from email_credentials import email_credentials
@@ -108,6 +112,8 @@ def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
         return '', '', ''
     return temps[0], max(temps), min(temps)
 
+CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
+_DEFAULT_COOKIE = CookieData(_DEFAULT_UNITS, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
 
 class SeanWeather(object):
     def __init__(self):
@@ -120,25 +126,22 @@ class SeanWeather(object):
         self.min_temp = ''
         self.icon = ''
         self.units = _DEFAULT_UNITS
-        self.previous = None
+        self.previous = _DEFAULT_COOKIE
 
     def update(self):
         log.info('STARTING')
-        self.previous = \
-            session.get('sw', dict(units=_DEFAULT_UNITS,
-                                   user_input=_DEFAULT_USER_INPUT,
-                                   num_hours=_DEFAULT_NUM_HOURS))
+        self.previous = session.get('sw2', _DEFAULT_COOKIE)
         self.update_units()
         self.update_location()
         self.update_num_hours()
         self.update_weather_data()
         self.update_current_condtions()
-        session['sw'] = dict(units=self.units, user_input=self.user_input,
-                             num_hours=self.num_hours)
+        session['sw2'] = CookieData(units=self.units, user_input=self.user_input,
+                                    num_hours=self.num_hours)
         log.info('FINISHED with %s' % self.user_input)
 
     def update_units(self):
-        self.units = self.previous['units']
+        self.units = self.previous.units
         new_units = request.args.get('new_units')
         if new_units in ('C', 'F') and new_units != self.units:
             self.units = new_units
@@ -146,16 +149,16 @@ class SeanWeather(object):
 
     def update_location(self):
         user_input = request.args.get('user_input',
-                                      self.previous['user_input'])
+                                      self.previous.user_input)
         self.location, self.user_input = get_location(user_input)
         log.info('%s', self.location)
 
     def update_num_hours(self):
         try:
             self.num_hours = int(request.args.get('num_hours',
-                                                  self.previous['num_hours']))
+                                                  self.previous.num_hours))
         except:
-            flask.flash('seanweather didnt like the number of hours, using %s',
+            flask.flash('seanweather didnt like the number of hours, using %d' %
                         _DEFAULT_NUM_HOURS)
             log.error('bad number of hours')
             self.num_hours = _DEFAULT_NUM_HOURS
