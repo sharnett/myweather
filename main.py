@@ -10,9 +10,20 @@ from database import db, Location, Lookup
 from datetime import datetime
 from urllib2 import urlopen
 from collections import namedtuple
+from enum import Enum
+
+class Units(Enum):
+    F = 1
+    C = 2
+
+    @classmethod
+    def get(cls, name, default=None):
+        try:
+            return cls[name]
+        except KeyError:
+            return default
 
 _DEFAULT_NUM_HOURS = 12
-_DEFAULT_UNITS = 'F'
 _DEFAULT_USER_INPUT = '10027'
 _DEFAULT_LOCATION_URL = '/q/zmw:10027.1.99999'
 _DEFAULT_LOCATION_NAME = '10027 -- New York, NY'
@@ -102,10 +113,10 @@ def get_location(user_input, opener=urlopen):
         return location, _DEFAULT_USER_INPUT
 
 
-def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
+def parse_temps(weather_data, num_hours=24, units=Units.F):
     ''' Get current temp, and min/max temps over the next num_hours '''
     temps = []
-    key = 'temp_c' if units == 'C' else 'temp'
+    key = 'temp_c' if units == Units.C else 'temp'
     for d in weather_data[:num_hours]:
         temps.append(int(d[key]))
     if not temps:
@@ -113,7 +124,7 @@ def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
     return temps[0], max(temps), min(temps)
 
 CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
-_DEFAULT_COOKIE = CookieData(_DEFAULT_UNITS, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
+_DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
 
 class SeanWeather(object):
     def __init__(self):
@@ -125,27 +136,27 @@ class SeanWeather(object):
         self.max_temp = ''
         self.min_temp = ''
         self.icon = ''
-        self.units = _DEFAULT_UNITS
-        self.previous = _DEFAULT_COOKIE
+        self.units = None
+        self.previous = None
 
     def update(self):
         log.info('STARTING')
-        self.previous = session.get('sw2', _DEFAULT_COOKIE)
+        self.previous = CookieData(*session.get('sw2', _DEFAULT_COOKIE))
         self.update_units()
         self.update_location()
         self.update_num_hours()
         self.update_weather_data()
         self.update_current_condtions()
-        session['sw2'] = CookieData(units=self.units, user_input=self.user_input,
+        session['sw2'] = CookieData(units=self.units.name, user_input=self.user_input,
                                     num_hours=self.num_hours)
         log.info('FINISHED with %s' % self.user_input)
 
     def update_units(self):
-        self.units = self.previous.units
-        new_units = request.args.get('new_units')
-        if new_units in ('C', 'F') and new_units != self.units:
-            self.units = new_units
-        log.warning('units: %s', self.units)
+        self.units = Units[self.previous.units]
+        request_units = request.args.get('new_units')
+        log.info('self.units: %s, request units: %s', self.units, request_units)
+        self.units = Units.get(request_units, self.units)
+        log.info('new units: %s', self.units)
 
     def update_location(self):
         user_input = request.args.get('user_input',

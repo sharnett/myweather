@@ -16,14 +16,14 @@
         <script type="text/javascript">
             var lineChartData = {{ sw.data_string|safe }};
             var num_hours = {{ sw.num_hours }};
-            var units = '{{ sw.units }}';
+            var units = '{{ sw.units.name }}';
             AmCharts.ready(weather);
         </script>
         <script type="text/javascript">
             window.addEventListener("DOMContentLoaded", function () {
               var form = document.getElementById("weather_form")
               document.getElementById("units").addEventListener("click", function () {
-                var units = '{{ sw.units }}'
+                var units = '{{ sw.units.name }}'
                 document.getElementById("new_units").value = (units == 'F') ? 'C' : 'F';
                 form.submit();
               });
@@ -44,7 +44,7 @@
   	  </div>
       <div id="summary" class="cyan lighten-5 z-depth-1">
         <span id="location"> {{ sw.location.name }} </span>
-        <span id="current"> {{ sw.current_temp }}&deg; <a href="#" id="units">{{ sw.units }}</a> <img id="currentimg" src={{ sw.icon | safe }} /> </span>
+        <span id="current"> {{ sw.current_temp }}&deg; <a href="#" id="units">{{ sw.units.name }}</a> <img id="currentimg" src={{ sw.icon | safe }} /> </span>
         <span id="high">{{ sw.max_temp }}&deg;</span>
         <span id="temp_divide">/</span>
         <span id="low"> {{ sw.min_temp }}&deg;</span>

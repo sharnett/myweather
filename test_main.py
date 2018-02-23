@@ -18,7 +18,8 @@ def test_parse_temps():
     assert f_current == 83
     assert f_max == 85
     assert f_min == 81
-    c_current, c_max, c_min = seanweather.parse_temps(weather_data, units='C')
+    c_current, c_max, c_min = seanweather.parse_temps(weather_data,
+                                                      units=seanweather.Units.C)
     assert c_current == 28
     assert c_max == 29
     assert c_min == 27
@@ -86,6 +87,9 @@ def _add_lookup(session, user_input='', url='', name='', cache=''):
     location = session.merge(Location(url, name, cache=cache))
     session.add(Lookup(user_input, location))
     session.commit()
+
+
+########## get_location ##############
 
 def test_get_location_lookup_table(session):
     _add_lookup(session, user_input='Boston', url='/q/boston',
@@ -167,3 +171,35 @@ def test_get_location_default_cache(session):
     location, _ = seanweather.get_location('Boston', lambda url: [][0])
     assert location.name == seanweather._DEFAULT_LOCATION_NAME
     assert location.cache == cache
+
+
+########## SeanWeather.update_units ##############
+
+def test_update_units_no_request(app):
+    sw = seanweather.SeanWeather()
+    sw.previous = seanweather.CookieData(units='C', user_input='', num_hours=0)
+    with app.test_request_context(''):
+        sw.update_units()
+    assert sw.units == seanweather.Units.C
+
+def test_update_units_request_invalid(app):
+    ''' The new_units query parameter is often missing '''
+    sw = seanweather.SeanWeather()
+    sw.previous = seanweather.CookieData(units='C', user_input='', num_hours=0)
+    with app.test_request_context('?new_units=&num_hours=24'):
+        sw.update_units()
+    assert sw.units == seanweather.Units.C
+
+def test_update_units_request_same(app):
+    sw = seanweather.SeanWeather()
+    sw.previous = seanweather.CookieData(units='C', user_input='', num_hours=0)
+    with app.test_request_context('?new_units=C'):
+        sw.update_units()
+    assert sw.units == seanweather.Units.C
+
+def test_update_units_request_new(app):
+    sw = seanweather.SeanWeather()
+    sw.previous = seanweather.CookieData(units='C', user_input='', num_hours=0)
+    with app.test_request_context('?new_units=F'):
+        sw.update_units()
+    assert sw.units == seanweather.Units.F
