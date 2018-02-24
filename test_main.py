@@ -4,27 +4,6 @@ import pytest
 from database import Location, Lookup
 import main as seanweather
 
-def test_parse_temps():
-    weather_data = [{'temp': '83', 'temp_c': '28'},
-                    {'temp': '81', 'temp_c': '27'},
-                    {'temp': '85', 'temp_c': '29'}]
-    weather_data *= 10
-    # The below two data points are outside the default 24-hour period, so they
-    # should not be included in the max/min calculation
-    weather_data.append({'temp': '100', 'temp_c': '100'})
-    weather_data.append({'temp': '0', 'temp_c': '0'})
-
-    f_current, f_max, f_min = seanweather.parse_temps(weather_data)
-    assert f_current == 83
-    assert f_max == 85
-    assert f_min == 81
-    c_current, c_max, c_min = seanweather.parse_temps(weather_data,
-                                                      units=seanweather.Units.C)
-    assert c_current == 28
-    assert c_max == 29
-    assert c_min == 27
-
-
 def test_jsonify():
     weather_data = [
     dict(
@@ -245,3 +224,40 @@ def test_update_weather_data_not_cached_good_response(session):
                          feel='100', temp_c='35', feel_c='35')]*100
     sw.update_weather_data(weather_getter=lambda url, api_key: weather_data)
     assert sw.weather_data == weather_data
+
+
+########## SeanWeather.update_current_conditions ##############
+
+def _get_weather_data():
+    weather_data = [{'temp': '83', 'temp_c': '28', 'icon': 'cloud'},
+                    {'temp': '81', 'temp_c': '27', 'icon': 'sun'},
+                    {'temp': '85', 'temp_c': '29'}]
+    weather_data *= 10
+    # The below two data points are outside the default 24-hour period, so they
+    # should not be included in the max/min calculation
+    weather_data.append({'temp': '100', 'temp_c': '100'})
+    weather_data.append({'temp': '0', 'temp_c': '0'})
+    return weather_data
+
+def test_update_current_conditions_F():
+    sw = seanweather.SeanWeather()
+    sw.weather_data = _get_weather_data()
+
+    sw.update_current_conditions()
+
+    assert sw.current_temp == 83
+    assert sw.max_temp == 85
+    assert sw.min_temp == 81
+    assert sw.icon == 'cloud'
+
+def test_update_current_conditions_C():
+    sw = seanweather.SeanWeather()
+    sw.units = seanweather.Units.C
+    sw.weather_data = _get_weather_data()
+
+    sw.update_current_conditions()
+
+    assert sw.current_temp == 28
+    assert sw.max_temp == 29
+    assert sw.min_temp == 27
+    assert sw.icon == 'cloud'

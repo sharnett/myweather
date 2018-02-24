@@ -113,16 +113,6 @@ def get_location(user_input, opener=urlopen):
         return location, _DEFAULT_USER_INPUT
 
 
-def parse_temps(weather_data, num_hours=24, units=Units.F):
-    ''' Get current temp, and min/max temps over the next num_hours '''
-    temps = []
-    key = 'temp_c' if units == Units.C else 'temp'
-    for d in weather_data[:num_hours]:
-        temps.append(int(d[key]))
-    if not temps:
-        return '', '', ''
-    return temps[0], max(temps), min(temps)
-
 CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
 _DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
 
@@ -138,6 +128,7 @@ class SeanWeather(object):
         self.icon = ''
         self.units = None
         self.previous = None
+        self.weather_data = ''
 
     def update(self):
         log.info('STARTING')
@@ -146,7 +137,7 @@ class SeanWeather(object):
         self.update_location()
         self.update_num_hours()
         self.update_weather_data()
-        self.update_current_condtions()
+        self.update_current_conditions()
         session['sw2'] = CookieData(units=self.units.name, user_input=self.user_input,
                                     num_hours=self.num_hours)
         log.info('FINISHED with %s' % self.user_input)
@@ -196,11 +187,15 @@ class SeanWeather(object):
         self.weather_data = json.loads(self.location.cache)
         self.data_string = jsonify(self.weather_data[:self.num_hours])
 
-    def update_current_condtions(self):
-        self.current_temp, self.max_temp, self.min_temp = parse_temps(
-            self.weather_data, units=self.units)
-        self.icon = (self.weather_data[0].get('icon')
-                     if self.weather_data else '')
+    def update_current_conditions(self):
+        ''' Update current temp and icon, and min/max temps over the next 24 hours '''
+        if not self.weather_data:
+            self.current_temp, self.max_temp, self.min_temp, self.icon = '', '', '', ''
+            return
+        temp_key = 'temp_c' if self.units == Units.C else 'temp'
+        temps = [int(weather_day[temp_key]) for weather_day in self.weather_data[:24]]
+        self.current_temp, self.max_temp, self.min_temp, self.icon = (
+            temps[0], max(temps), min(temps), self.weather_data[0].get('icon'))
 
     def _was_recently_updated(self, max_seconds=2700):
         return ((datetime.now() - self.location.last_updated).seconds <=
