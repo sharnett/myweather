@@ -168,10 +168,11 @@ class SeanWeather(object):
         try:
             self.num_hours = int(request.args.get('num_hours',
                                                   self.previous.num_hours))
-        except:
+        except ValueError:
             flask.flash('seanweather didnt like the number of hours, using %d' %
                         _DEFAULT_NUM_HOURS)
-            log.error('bad number of hours')
+            log.error('bad number of hours. request: %s, prev: %s',
+                      request.args.get('num_hours'), self.previous.num_hours)
             self.num_hours = _DEFAULT_NUM_HOURS
 
     def _was_recently_updated(self, max_seconds=2700):

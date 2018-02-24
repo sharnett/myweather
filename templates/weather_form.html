@@ -62,7 +62,7 @@
           <div id="hours" class="control-group">
               <label class="control-label" for="input_num_hours"># hours to display: </label>
               <div class="controls">
-                  <input class="input-mini" type="text" size=3 id="input_num_hours" name="num_hours" value="{{ sw.num_hours }}">
+                  <input class="input-mini" type="number" size=3 id="input_num_hours" name="num_hours" value="{{ sw.num_hours }}" min=1 max=240>
               </div>
           <div class="control-group">
               <div class="controls">

@@ -203,3 +203,20 @@ def test_update_units_request_new(app):
     with app.test_request_context('?new_units=F'):
         sw.update_units()
     assert sw.units == seanweather.Units.F
+
+
+########## SeanWeather.update_num_hours ##############
+
+def test_update_num_hours_bad_request(app):
+    sw = seanweather.SeanWeather()
+    sw.previous = seanweather.CookieData(units='', user_input='', num_hours='36')
+    with app.test_request_context('?num_hours=tacos'):
+        sw.update_num_hours()
+    assert sw.num_hours == seanweather._DEFAULT_NUM_HOURS
+
+def test_update_num_hours_good_request(app):
+    sw = seanweather.SeanWeather()
+    sw.previous = seanweather.CookieData(units='', user_input='', num_hours='36')
+    with app.test_request_context('?num_hours=48'):
+        sw.update_num_hours()
+    assert sw.num_hours == 48
