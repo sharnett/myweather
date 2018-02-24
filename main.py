@@ -175,11 +175,7 @@ class SeanWeather(object):
                       request.args.get('num_hours'), self.previous.num_hours)
             self.num_hours = _DEFAULT_NUM_HOURS
 
-    def _was_recently_updated(self, max_seconds=2700):
-        return ((datetime.now() - self.location.last_updated).seconds <=
-                max_seconds)
-
-    def update_weather_data(self):
+    def update_weather_data(self, weather_getter=weather_for_url):
         if self.location.cache and self._was_recently_updated():
             log.info('weather for %s was recently cached, reusing',
                      self.location.name)
@@ -188,7 +184,7 @@ class SeanWeather(object):
             log.info('%d chars in cache, %ds since last update'
                      % (len(self.location.cache), num_secs))
             log.info('using weather API for %s', self.location.name)
-            wd = weather_for_url(self.location.url, API_KEY)
+            wd = weather_getter(self.location.url, API_KEY)
             self.location.cache = json.dumps(wd)
             if wd:
                 self.location.last_updated = datetime.now()
@@ -205,6 +201,10 @@ class SeanWeather(object):
             self.weather_data, units=self.units)
         self.icon = (self.weather_data[0].get('icon')
                      if self.weather_data else '')
+
+    def _was_recently_updated(self, max_seconds=2700):
+        return ((datetime.now() - self.location.last_updated).seconds <=
+                max_seconds)
 
 
 @app.before_request

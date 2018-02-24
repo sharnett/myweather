@@ -220,3 +220,28 @@ def test_update_num_hours_good_request(app):
     with app.test_request_context('?num_hours=48'):
         sw.update_num_hours()
     assert sw.num_hours == 48
+
+
+########## SeanWeather.update_weather_data ##############
+
+def test_update_weather_data_cached(session):
+    sw = seanweather.SeanWeather()
+    weather_data = [dict(date=0, icon='', icon_pos=100, temp='100', pop='0',
+                         feel='100', temp_c='35', feel_c='35')]*100
+    sw.location = Location('url', name='NYC', cache=json.dumps(weather_data))
+    sw.update_weather_data(weather_getter=lambda url, api_key: [])
+    assert sw.weather_data == weather_data
+
+def test_update_weather_data_not_cached_empty_response(session):
+    sw = seanweather.SeanWeather()
+    sw.location = Location('url', name='NYC')
+    sw.update_weather_data(weather_getter=lambda url, api_key: [])
+    assert sw.weather_data == []
+
+def test_update_weather_data_not_cached_good_response(session):
+    sw = seanweather.SeanWeather()
+    sw.location = Location('url', name='NYC')
+    weather_data = [dict(date=0, icon='', icon_pos=100, temp='100', pop='0',
+                         feel='100', temp_c='35', feel_c='35')]*100
+    sw.update_weather_data(weather_getter=lambda url, api_key: weather_data)
+    assert sw.weather_data == weather_data
