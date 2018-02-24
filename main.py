@@ -28,6 +28,8 @@ _DEFAULT_USER_INPUT = '10027'
 _DEFAULT_LOCATION_URL = '/q/zmw:10027.1.99999'
 _DEFAULT_LOCATION_NAME = '10027 -- New York, NY'
 _DEFAULT_LOCATION = Location(_DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME)
+CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
+_DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
 
 app = flask.Flask(__name__)
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
@@ -66,56 +68,6 @@ def main():
     app.run(host='0.0.0.0')
 
 
-def get_location(user_input, opener=urlopen):
-    ''' Get the Location corresponding the user input
-
-    Locations are keyed by url and cache their weather data, which we want
-    to use if we can.
-
-    First, we look for the user_input in the Lookup table. If there was a
-    previous lookup, return the corresponding location.
-
-    If not, use the autocomplete API to get the url. If that url exists in the
-    Location table, return that location.
-
-    Otherwise, create and return a new Location built from the results of the
-    autocomplete API.
-
-    If the autocomplete API fails, return a default location.
-    '''
-    last_lookup = (Lookup.query.filter_by(user_input=user_input)
-                   .order_by(Lookup.date.desc()).first())
-    log.info('db result for most recent lookup of this location: ' + str(last_lookup))
-    if (last_lookup is not None and
-            (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
-        log.info('got location info from the cache of a previous lookup')
-        return last_lookup.location, user_input
-    try:
-        url, name = autocomplete_user_input(user_input, opener=opener)
-        log.info('got location info from autocomplete API')
-        log.info('%s -> %s, %s', user_input, url, name)
-        location = Location.query.get(url)
-        if location is None:
-            log.info('no info for that location, creating a new entry')
-            location = Location(url, name)
-        else:
-            log.info('already have info for that location, reusing it')
-        return location, user_input
-    except IndexError, KeyError:
-        flask.flash('seanweather didnt like that, please try another city or '
-                    'zipcode')
-        log.warning('failed to parse: %s. Using %s', user_input,
-                    _DEFAULT_USER_INPUT)
-        # Check for a default in the db so we can make use of any existing cache
-        location = Location.query.get(_DEFAULT_LOCATION_URL)
-        if location is None:
-            location = _DEFAULT_LOCATION
-        return location, _DEFAULT_USER_INPUT
-
-
-CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
-_DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
-
 class SeanWeather(object):
     def __init__(self):
         self.data_string = ''
@@ -149,10 +101,52 @@ class SeanWeather(object):
         self.units = Units.get(request_units, self.units)
         log.info('new units: %s', self.units)
 
-    def update_location(self):
+    def update_location(self, opener=urlopen):
+        ''' Get the Location corresponding to the user input
+
+        Locations are keyed by url and cache their weather data, which we want to
+        use if we can.
+
+        First, we look for the user_input in the Lookup table. If there was a
+        previous lookup within the last seven days, we return the corresponding
+        location.
+
+        If the user input is not in the Lookup table, we use the autocomplete API
+        to get a url and name for the user input. If the API fails, we use the
+        default url and name, and replace the user_input with the default so we
+        don't cache it.
+
+        If the url exists in the Location table, we return that location. Otherwise,
+        we create and return a new Location from the url and name.
+        '''
         user_input = request.args.get('user_input',
                                       self.previous.user_input)
-        self.location, self.user_input = get_location(user_input)
+        last_lookup = (Lookup.query.filter_by(user_input=user_input)
+                       .order_by(Lookup.date.desc()).first())
+        log.info('db result for most recent lookup of this location: %s', last_lookup)
+        if (last_lookup is not None and
+                (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
+            log.info('got location info from the cache of a previous lookup')
+            self.location = last_lookup.location
+            return
+        # No recent lookups for this user input, so check the autocomplete API
+        try:
+            url, name = autocomplete_user_input(user_input, opener=opener)
+            log.info('got location info from autocomplete API:%s -> %s, %s',
+                     user_input, url, name)
+        # That didn't work, so just use the default url and name
+        except IndexError, KeyError:
+            flask.flash('I didnt like that, please try another city or zipcode')
+            log.warning('%s failed. Using %s', user_input, _DEFAULT_USER_INPUT)
+            url, name = _DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME
+            self.user_input = _DEFAULT_USER_INPUT
+        # Now look for the url in the Location table
+        self.location = Location.query.get(url)
+        if self.location is None:
+            log.info('no info for that location, creating a new entry')
+            self.location = Location(url, name)
+        else:
+            log.info('already have info for that location, reusing it')
         log.info('%s', self.location)
 
     def update_num_hours(self):
