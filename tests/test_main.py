@@ -1,8 +1,8 @@
 import json
 import pytest
 
-from database import Location, Lookup
-import main as seanweather
+from app.database import Location, Lookup
+import app.main as seanweather
 
 def test_jsonify():
     weather_data = [
@@ -78,6 +78,7 @@ def test_update_location_lookup_table(app, session):
     with app.test_request_context('?user_input=New+York'):
         sw.update_location(opener=None)
     assert sw.location.name == 'New York, New York'
+    assert sw.user_input == 'New York'
 
 PARIS_JSON = json.dumps({"RESULTS": [
     {
@@ -107,9 +108,11 @@ def test_update_location_autocomplete_new(app, session):
             pass
         inner.read = lambda: PARIS_JSON
         return inner
-    with app.test_request_context('?user_input=fake'):
+    fake_user_input = 'fake user input'
+    with app.test_request_context('?user_input=%s' % fake_user_input):
         sw.update_location(opener)
     assert sw.location.name == 'Paris, France'
+    assert sw.user_input == fake_user_input
 
 def test_update_location_autocomplete_reuse(app, session):
     ''' The user input isn't in the (empty) Lookup table, so it checks the
@@ -124,14 +127,16 @@ def test_update_location_autocomplete_reuse(app, session):
             pass
         inner.read = lambda: PARIS_JSON
         return inner
+    fake_user_input = 'fake user input'
     fake_location_name = 'Fake Paris'
     real_paris_url = '/q/zmw:00000.45.07156' # compare this to the paris JSON above
-    _add_lookup(session, user_input='fake user input', url=real_paris_url,
+    _add_lookup(session, user_input=fake_user_input, url=real_paris_url,
         name=fake_location_name)
 
-    with app.test_request_context('?user_input='):
+    with app.test_request_context('?user_input=%s' % fake_user_input):
         sw.update_location(opener)
     assert sw.location.name == fake_location_name
+    assert sw.user_input == fake_user_input
 
 def test_update_location_default_nocache(app, session):
     ''' The autocomplete API returns nothing and raises an IndexError. With nothing
@@ -142,6 +147,7 @@ def test_update_location_default_nocache(app, session):
     with app.test_request_context('?user_input=Boston'):
         sw.update_location(opener=lambda url: [][0])
     assert sw.location.name == seanweather._DEFAULT_LOCATION_NAME
+    assert sw.user_input == seanweather._DEFAULT_USER_INPUT
     assert sw.location.cache == ''
 
 def test_update_location_default_cache(app, session):
@@ -156,6 +162,7 @@ def test_update_location_default_cache(app, session):
     with app.test_request_context('?user_input=Boston'):
         sw.update_location(opener=lambda url: [][0])
     assert sw.location.name == seanweather._DEFAULT_LOCATION_NAME
+    assert sw.user_input == seanweather._DEFAULT_USER_INPUT
     assert sw.location.cache == cache
 
 

@@ -1,7 +1,6 @@
 from datetime import datetime
-from flask.ext.sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
+from app import db
 
 
 class Location(db.Model):
@@ -36,3 +35,7 @@ class Lookup(db.Model):
 
     def __repr__(self):
         return '<Lookup %r, %r, %r>' % (self.user_input, self.name, self.date)
+
+
+if __name__ == '__main__':
+    db.create_all()

@@ -3,7 +3,7 @@ import json
 import pytest
 import time
 
-import wunderground
+import app.wunderground as wunderground
 
 fake_json = {"hourly_forecast": [
     {

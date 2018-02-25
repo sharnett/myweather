@@ -1,11 +1,10 @@
 import json
 import os
 import sqlalchemy
-from database import Location
-from wunderground import weather_for_url, autocomplete_user_input
 
-API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
-SQLALCHEMY_DATABASE_URI = 'sqlite:///db.db'
+from config import API_KEY, SQLALCHEMY_DATABASE_URI
+from app.database import Location
+from app.wunderground import weather_for_url, autocomplete_user_input
 
 def get_db_session():
     engine = sqlalchemy.create_engine(SQLALCHEMY_DATABASE_URI, echo=True)

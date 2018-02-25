@@ -1,21 +1,18 @@
-import flask
 import json
-import logging
-import logging.handlers
-import os
-from flask import render_template, request, session
-from wunderground import weather_for_url, autocomplete_user_input
-from os.path import dirname, abspath, isfile
-from database import db, Location, Lookup
-from datetime import datetime
-from urllib2 import urlopen
 from collections import namedtuple
+from datetime import datetime
 from enum import Enum
+from flask import flash, render_template, request, session
+from urllib2 import urlopen
+
+from app import app, db
+from config import log, API_KEY
+from database import Location, Lookup
+from wunderground import weather_for_url, autocomplete_user_input
 
 class Units(Enum):
     F = 1
     C = 2
-
     @classmethod
     def get(cls, name, default=None):
         try:
@@ -30,42 +27,6 @@ _DEFAULT_LOCATION_NAME = '10027 -- New York, NY'
 _DEFAULT_LOCATION = Location(_DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME)
 CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
 _DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
-
-app = flask.Flask(__name__)
-SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
-API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
-DEBUG = True if SECRET_KEY == 'development' else False
-if DEBUG:
-    werkzeug_logger = logging.getLogger('werkzeug')
-    werkzeug_logger.setLevel(logging.INFO)
-else:
-    import logging
-    from TlsSMTPHandler import TlsSMTPHandler
-    from email_credentials import email_credentials
-    mail_handler = TlsSMTPHandler(*email_credentials())
-    mail_handler.setLevel(logging.ERROR)
-    app.logger.addHandler(mail_handler)
-SQLALCHEMY_DATABASE_URI = 'sqlite:///db.db'
-app.config.from_object(__name__)
-db.init_app(app)
-
-log = logging.getLogger('seanweather')
-log.setLevel(logging.DEBUG)
-fh = logging.handlers.RotatingFileHandler('seanweather.log', maxBytes=10000000)
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-log.addHandler(fh)
-
-if not isfile(dirname(abspath(__file__)) + '/db.db'):
-    log.warning('db doesnt exist, creating a new one')
-    with app.app_context():
-        db.create_all()
-
-
-def main():
-    app.run(host='0.0.0.0')
 
 
 class SeanWeather(object):
@@ -119,9 +80,9 @@ class SeanWeather(object):
         If the url exists in the Location table, we return that location. Otherwise,
         we create and return a new Location from the url and name.
         '''
-        user_input = request.args.get('user_input',
-                                      self.previous.user_input)
-        last_lookup = (Lookup.query.filter_by(user_input=user_input)
+        self.user_input = request.args.get('user_input',
+                                           self.previous.user_input)
+        last_lookup = (Lookup.query.filter_by(user_input=self.user_input)
                        .order_by(Lookup.date.desc()).first())
         log.info('db result for most recent lookup of this location: %s', last_lookup)
         if (last_lookup is not None and
@@ -131,13 +92,13 @@ class SeanWeather(object):
             return
         # No recent lookups for this user input, so check the autocomplete API
         try:
-            url, name = autocomplete_user_input(user_input, opener=opener)
+            url, name = autocomplete_user_input(self.user_input, opener=opener)
             log.info('got location info from autocomplete API:%s -> %s, %s',
-                     user_input, url, name)
+                     self.user_input, url, name)
         # That didn't work, so just use the default url and name
         except IndexError, KeyError:
-            flask.flash('I didnt like that, please try another city or zipcode')
-            log.warning('%s failed. Using %s', user_input, _DEFAULT_USER_INPUT)
+            flash('I didnt like that, please try another city or zipcode')
+            log.warning('%s failed. Using %s', self.user_input, _DEFAULT_USER_INPUT)
             url, name = _DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME
             self.user_input = _DEFAULT_USER_INPUT
         # Now look for the url in the Location table
@@ -154,7 +115,7 @@ class SeanWeather(object):
             self.num_hours = int(request.args.get('num_hours',
                                                   self.previous.num_hours))
         except ValueError:
-            flask.flash('seanweather didnt like the number of hours, using %d' %
+            flash('seanweather didnt like the number of hours, using %d' %
                         _DEFAULT_NUM_HOURS)
             log.error('bad number of hours. request: %s, prev: %s',
                       request.args.get('num_hours'), self.previous.num_hours)
@@ -270,7 +231,3 @@ def jsonify(weather_data):
                   "feel: {feel}, temp_c: {temp_c}, feel_c: {feel_c}}}")
     stringified = [row_string.format(**row) for row in weather_data]
     return "[" + ",\n".join(stringified) + "]"
-
-
-if __name__ == '__main__':
-    main()
