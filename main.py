@@ -98,7 +98,7 @@ def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
     temps = []
     key = 'temp_c' if units == 'C' else 'temp'
     for d in weather_data[:num_hours]:
-        temps.append(int(d[key]))
+        temps.append(int(round(float(d[key]))))
     if not temps:
         return '', '', ''
     return temps[0], max(temps), min(temps)
