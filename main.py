@@ -107,8 +107,8 @@ def parse_temps(weather_data, num_hours=24, units=_DEFAULT_UNITS):
 class SeanWeather(object):
     def __init__(self):
         self.data_string = ''
-        self.location = location = Location('/q/zmw:10027.1.99999',
-                                            name='10027 -- New York, NY')
+        self.location = Location('/q/zmw:10027.1.99999',
+                                 name='10027 -- New York, NY')
         self.user_input = _DEFAULT_USER_INPUT
         self.num_hours = _DEFAULT_NUM_HOURS
         self.current_temp = ''
