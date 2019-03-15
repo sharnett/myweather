@@ -8,7 +8,7 @@ from urllib2 import urlopen
 from app import app, db
 from config import log, API_KEY
 from database import Location, Lookup
-from wunderground import weather_for_url, autocomplete_user_input
+from wunderground import weather_for_location, autocomplete_user_input
 
 class Units(Enum):
     F = 1
@@ -20,11 +20,12 @@ class Units(Enum):
         except KeyError:
             return default
 
-_DEFAULT_NUM_HOURS = 12
+_DEFAULT_NUM_HOURS = 24
 _DEFAULT_USER_INPUT = '10027'
 _DEFAULT_LOCATION_URL = '/q/zmw:10027.1.99999'
 _DEFAULT_LOCATION_NAME = '10027 -- New York, NY'
 _DEFAULT_LOCATION = Location(_DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME)
+_DEFAULT_UNITS = Units.F
 CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
 _DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
 
@@ -39,7 +40,7 @@ class SeanWeather(object):
         self.max_temp = ''
         self.min_temp = ''
         self.icon = ''
-        self.units = None
+        self.units = _DEFAULT_UNITS
         self.previous = None
         self.weather_data = ''
 
@@ -56,7 +57,7 @@ class SeanWeather(object):
         log.info('FINISHED with %s' % self.user_input)
 
     def update_units(self):
-        self.units = Units[self.previous.units]
+        self.units = Units.get(self.previous.units, Units.F)
         request_units = request.args.get('new_units')
         log.info('self.units: %s, request units: %s', self.units, request_units)
         self.units = Units.get(request_units, self.units)
@@ -82,33 +83,36 @@ class SeanWeather(object):
         '''
         self.user_input = request.args.get('user_input',
                                            self.previous.user_input)
-        last_lookup = (Lookup.query.filter_by(user_input=self.user_input)
-                       .order_by(Lookup.date.desc()).first())
-        log.info('db result for most recent lookup of this location: %s', last_lookup)
-        if (last_lookup is not None and
-                (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
-            log.info('got location info from the cache of a previous lookup')
-            self.location = last_lookup.location
-            return
-        # No recent lookups for this user input, so check the autocomplete API
-        try:
-            url, name = autocomplete_user_input(self.user_input, opener=opener)
-            log.info('got location info from autocomplete API:%s -> %s, %s',
-                     self.user_input, url, name)
-        # That didn't work, so just use the default url and name
-        except IndexError, KeyError:
-            flash('I didnt like that, please try another city or zipcode')
-            log.warning('%s failed. Using %s', self.user_input, _DEFAULT_USER_INPUT)
-            url, name = _DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME
-            self.user_input = _DEFAULT_USER_INPUT
-        # Now look for the url in the Location table
-        self.location = Location.query.get(url)
-        if self.location is None:
-            log.info('no info for that location, creating a new entry')
-            self.location = Location(url, name)
-        else:
-            log.info('already have info for that location, reusing it')
+
+        self.location = Location(self.user_input, self.user_input)
         log.info('%s', self.location)
+        # last_lookup = (Lookup.query.filter_by(user_input=self.user_input)
+        #                .order_by(Lookup.date.desc()).first())
+        # log.info('db result for most recent lookup of this location: %s', last_lookup)
+        # if (last_lookup is not None and
+        #         (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
+        #     log.info('got location info from the cache of a previous lookup')
+        #     self.location = last_lookup.location
+        #     return
+        # # No recent lookups for this user input, so check the autocomplete API
+        # try:
+        #     url, name = autocomplete_user_input(self.user_input, opener=opener)
+        #     log.info('got location info from autocomplete API:%s -> %s, %s',
+        #              self.user_input, url, name)
+        # # That didn't work, so just use the default url and name
+        # except IndexError, KeyError:
+        #     flash('I didnt like that, please try another city or zipcode')
+        #     log.warning('%s failed. Using %s', self.user_input, _DEFAULT_USER_INPUT)
+        #     url, name = _DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME
+        #     self.user_input = _DEFAULT_USER_INPUT
+        # # Now look for the url in the Location table
+        # self.location = Location.query.get(url)
+        # if self.location is None:
+        #     log.info('no info for that location, creating a new entry')
+        #     self.location = Location(url, name)
+        # else:
+        #     log.info('already have info for that location, reusing it')
+        # log.info('%s', self.location)
 
     def update_num_hours(self):
         try:
@@ -121,8 +125,9 @@ class SeanWeather(object):
                       request.args.get('num_hours'), self.previous.num_hours)
             self.num_hours = _DEFAULT_NUM_HOURS
 
-    def update_weather_data(self, weather_getter=weather_for_url):
-        if self.location.cache and self._was_recently_updated():
+    def update_weather_data(self, weather_getter=weather_for_location):
+        if False:
+        # if self.location.cache and self._was_recently_updated():
             log.info('weather for %s was recently cached, reusing',
                      self.location.name)
         else:
@@ -130,7 +135,7 @@ class SeanWeather(object):
             log.info('%d chars in cache, %ds since last update'
                      % (len(self.location.cache), num_secs))
             log.info('using weather API for %s', self.location.name)
-            wd = weather_getter(self.location.url, API_KEY)
+            wd = weather_getter(self.user_input, API_KEY)
             self.location.cache = json.dumps(wd)
             if wd:
                 self.location.last_updated = datetime.now()
@@ -140,7 +145,7 @@ class SeanWeather(object):
         db.session.add(Lookup(self.user_input, self.location))
         db.session.commit()
         self.weather_data = json.loads(self.location.cache)
-        self.data_string = jsonify(self.weather_data[:self.num_hours])
+        self.data_string = jsonify(self.weather_data[:(self.num_hours / 3)])
 
     def update_current_conditions(self):
         ''' Update current temp and icon, and min/max temps over the next 24 hours '''
@@ -174,47 +179,35 @@ def fake():
     log.info('STARTING -- fake')
     sw = SeanWeather()
     sw.weather_data = [
-            {'temp': u'85', 'feel': u'83', 'pop': u'0', 'icon_pos': 100,
+            {'temp': u'85', 'feel': u'83', 'pop': u'0', 'icon_pos': 10,
                 'feel_c': u'28', 'temp_c': u'29', 'date': 1498334400000,
                 'icon': u'http://icons.wxug.com/i/c/k/partlycloudy.gif'},
-            {'temp': u'85', 'feel': u'83', 'pop': u'0', 'icon_pos': 100,
-                'feel_c': u'28', 'temp_c': u'29', 'date': 1498338000000,
-                'icon': u'http://icons.wxug.com/i/c/k/partlycloudy.gif'},
-            {'temp': u'85', 'feel': u'83', 'pop': u'0', 'icon_pos': 100,
-                'feel_c': u'28', 'temp_c': u'29', 'date': 1498341600000,
-                'icon': u'http://icons.wxug.com/i/c/k/partlycloudy.gif'},
-            {'temp': u'85', 'feel': u'83', 'pop': u'0', 'icon_pos': 100,
+            {'temp': u'85', 'feel': u'83', 'pop': u'0', 'icon_pos': 10,
                 'feel_c': u'28', 'temp_c': u'29', 'date': 1498345200000,
                 'icon': u'http://icons.wxug.com/i/c/k/clear.gif'},
-            {'temp': u'83', 'feel': u'82', 'pop': u'0', 'icon_pos': 100,
-                'feel_c': u'28', 'temp_c': u'28', 'date': 1498348800000,
-                'icon': u'http://icons.wxug.com/i/c/k/clear.gif'},
-            {'temp': u'81', 'feel': u'81', 'pop': u'0', 'icon_pos': 100,
-                'feel_c': u'27', 'temp_c': u'27', 'date': 1498352400000,
-                'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'},
-            {'temp': u'79', 'feel': u'79', 'pop': u'1', 'icon_pos': 100,
+            {'temp': u'79', 'feel': u'79', 'pop': u'1', 'icon_pos': 10,
                 'feel_c': u'26', 'temp_c': u'26', 'date': 1498356000000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'},
-            {'temp': u'78', 'feel': u'78', 'pop': u'2', 'icon_pos': 100,
-                'feel_c': u'26', 'temp_c': u'26', 'date': 1498359600000,
+            {'temp': u'78', 'feel': u'78', 'pop': u'2', 'icon_pos': 10,
+                'feel_c': u'26', 'temp_c': u'26', 'date': 1498366800000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'},
-            {'temp': u'77', 'feel': u'77', 'pop': u'2', 'icon_pos': 100,
-                'feel_c': u'25', 'temp_c': u'25', 'date': 1498363200000,
+            {'temp': u'77', 'feel': u'77', 'pop': u'2', 'icon_pos': 10,
+                'feel_c': u'25', 'temp_c': u'25', 'date': 1498377600000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'},
-            {'temp': u'75', 'feel': u'75', 'pop': u'2', 'icon_pos': 100,
-                'feel_c': u'24', 'temp_c': u'24', 'date': 1498366800000,
+            {'temp': u'75', 'feel': u'75', 'pop': u'2', 'icon_pos': 10,
+                'feel_c': u'24', 'temp_c': u'24', 'date': 1498388400000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'},
-            {'temp': u'74', 'feel': u'74', 'pop': u'3', 'icon_pos': 100,
-                'feel_c': u'23', 'temp_c': u'23', 'date': 1498370400000,
+            {'temp': u'74', 'feel': u'74', 'pop': u'3', 'icon_pos': 10,
+                'feel_c': u'23', 'temp_c': u'23', 'date': 1498399200000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'},
-            {'temp': u'73', 'feel': u'73', 'pop': u'3', 'icon_pos': 100,
-                'feel_c': u'23', 'temp_c': u'23', 'date': 1498374000000,
+            {'temp': u'73', 'feel': u'73', 'pop': u'3', 'icon_pos': 10,
+                'feel_c': u'23', 'temp_c': u'23', 'date': 1498410000000,
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'}]
     sw.data_string = jsonify(sw.weather_data)
     sw.icon = 'http://icons.wxug.com/i/c/k/nt_clear.gif'
     sw.location = Location('', name='10027 -- New York, NY')
     sw.user_input = 'chilled'
-    sw.num_hours = 12
+    sw.num_hours = 24
     sw.current_temp, sw.max_temp, sw.min_temp = 75, 80, 65
     log.info('FINISHED with %s -- fake', sw.user_input)
     return render_template('weather_form.html', sw=sw)

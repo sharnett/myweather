@@ -4,7 +4,7 @@ import os
 from os.path import dirname, abspath, isfile
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development')
-API_KEY = os.environ.get('WUNDERGROUND_KEY', 'development')
+API_KEY = os.environ.get('OPENWEATHERMAP_KEY', 'development')
 DEBUG = True if SECRET_KEY == 'development' else False
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))  

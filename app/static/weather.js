@@ -28,8 +28,8 @@ function weather() {
     popAxis.dashLength = 4;
     popAxis.gridAlpha = 0;
     popAxis.minimum = 0;
-    popAxis.maximum = 100;
-    popAxis.unit = "%";
+    popAxis.maximum = 10;
+    popAxis.unit = "mm";
     chart.addValueAxis(popAxis);
 
     // GRAPH
@@ -71,9 +71,9 @@ function weather() {
     pop.valueAxis = popAxis;
     pop.type = "smoothedLine";
     pop.valueField = "pop";
-    pop.title = "% chance of rain";
+    pop.title = "mm of precipitation";
     pop.lineColor = 'blue';
-    pop.balloonText = "[[value]]%";
+    pop.balloonText = "[[value]] mm";
     chart.addGraph(pop);
 
     // CURSOR

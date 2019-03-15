@@ -70,15 +70,15 @@ def _add_lookup(session, user_input='', url='', name='', cache=''):
 
 ########## SeanWeather.update_location ##############
 
-def test_update_location_lookup_table(app, session):
-    _add_lookup(session, user_input='New York', url='/q/nyc',
-                name='New York, New York')
-    sw = seanweather.SeanWeather()
-    sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
-    with app.test_request_context('?user_input=New+York'):
-        sw.update_location(opener=None)
-    assert sw.location.name == 'New York, New York'
-    assert sw.user_input == 'New York'
+# def test_update_location_lookup_table(app, session):
+#     _add_lookup(session, user_input='New York', url='/q/nyc',
+#                 name='New York, New York')
+#     sw = seanweather.SeanWeather()
+#     sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
+#     with app.test_request_context('?user_input=New+York'):
+#         sw.update_location(opener=None)
+#     assert sw.location.name == 'New York, New York'
+#     assert sw.user_input == 'New York'
 
 PARIS_JSON = json.dumps({"RESULTS": [
     {
@@ -95,75 +95,75 @@ PARIS_JSON = json.dumps({"RESULTS": [
     },
 ]})
 
-def test_update_location_autocomplete_new(app, session):
-    ''' The user input isn't in the (empty) Lookup table, so it checks
-        the autocomplete API instead, which returns some json for Paris.
-        Paris isn't in the Location table so it returns a new Location built
-        from the Paris json.
-    '''
-    sw = seanweather.SeanWeather()
-    sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
-    def opener(url):
-        def inner():
-            pass
-        inner.read = lambda: PARIS_JSON
-        return inner
-    fake_user_input = 'fake user input'
-    with app.test_request_context('?user_input=%s' % fake_user_input):
-        sw.update_location(opener)
-    assert sw.location.name == 'Paris, France'
-    assert sw.user_input == fake_user_input
+# def test_update_location_autocomplete_new(app, session):
+#     ''' The user input isn't in the (empty) Lookup table, so it checks
+#         the autocomplete API instead, which returns some json for Paris.
+#         Paris isn't in the Location table so it returns a new Location built
+#         from the Paris json.
+#     '''
+#     sw = seanweather.SeanWeather()
+#     sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
+#     def opener(url):
+#         def inner():
+#             pass
+#         inner.read = lambda: PARIS_JSON
+#         return inner
+#     fake_user_input = 'fake user input'
+#     with app.test_request_context('?user_input=%s' % fake_user_input):
+#         sw.update_location(opener)
+#     assert sw.location.name == 'Paris, France'
+#     assert sw.user_input == fake_user_input
 
-def test_update_location_autocomplete_reuse(app, session):
-    ''' The user input isn't in the (empty) Lookup table, so it checks the
-        autocomplete API instead, which returns some json for Paris. The url
-        from that json *is* in the Location table so it returns that Location
-        and ignores the Paris json.
-    '''
-    sw = seanweather.SeanWeather()
-    sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
-    def opener(url):
-        def inner():
-            pass
-        inner.read = lambda: PARIS_JSON
-        return inner
-    fake_user_input = 'fake user input'
-    fake_location_name = 'Fake Paris'
-    real_paris_url = '/q/zmw:00000.45.07156' # compare this to the paris JSON above
-    _add_lookup(session, user_input=fake_user_input, url=real_paris_url,
-        name=fake_location_name)
+# def test_update_location_autocomplete_reuse(app, session):
+#     ''' The user input isn't in the (empty) Lookup table, so it checks the
+#         autocomplete API instead, which returns some json for Paris. The url
+#         from that json *is* in the Location table so it returns that Location
+#         and ignores the Paris json.
+#     '''
+#     sw = seanweather.SeanWeather()
+#     sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
+#     def opener(url):
+#         def inner():
+#             pass
+#         inner.read = lambda: PARIS_JSON
+#         return inner
+#     fake_user_input = 'fake user input'
+#     fake_location_name = 'Fake Paris'
+#     real_paris_url = '/q/zmw:00000.45.07156' # compare this to the paris JSON above
+#     _add_lookup(session, user_input=fake_user_input, url=real_paris_url,
+#         name=fake_location_name)
 
-    with app.test_request_context('?user_input=%s' % fake_user_input):
-        sw.update_location(opener)
-    assert sw.location.name == fake_location_name
-    assert sw.user_input == fake_user_input
+#     with app.test_request_context('?user_input=%s' % fake_user_input):
+#         sw.update_location(opener)
+#     assert sw.location.name == fake_location_name
+#     assert sw.user_input == fake_user_input
 
-def test_update_location_default_nocache(app, session):
-    ''' The autocomplete API returns nothing and raises an IndexError. With nothing
-        in the database, it returns the default location with no cache.
-    '''
-    sw = seanweather.SeanWeather()
-    sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
-    with app.test_request_context('?user_input=Boston'):
-        sw.update_location(opener=lambda url: [][0])
-    assert sw.location.name == seanweather._DEFAULT_LOCATION_NAME
-    assert sw.user_input == seanweather._DEFAULT_USER_INPUT
-    assert sw.location.cache == ''
+# def test_update_location_default_nocache(app, session):
+#     ''' The autocomplete API returns nothing and raises an IndexError. With nothing
+#         in the database, it returns the default location with no cache.
+#     '''
+#     sw = seanweather.SeanWeather()
+#     sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
+#     with app.test_request_context('?user_input=Boston'):
+#         sw.update_location(opener=lambda url: [][0])
+#     assert sw.location.name == seanweather._DEFAULT_LOCATION_NAME
+#     assert sw.user_input == seanweather._DEFAULT_USER_INPUT
+#     assert sw.location.cache == ''
 
-def test_update_location_default_cache(app, session):
-    ''' The autocomplete API returns nothing and raises an IndexError. But there is
-        an entry for the default Location in the db, so it returns that (with its cache)
-    '''
-    sw = seanweather.SeanWeather()
-    sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
-    cache = 'old weather data'
-    _add_lookup(session, user_input='New York', url=seanweather._DEFAULT_LOCATION_URL,
-        name=seanweather._DEFAULT_LOCATION_NAME, cache=cache)
-    with app.test_request_context('?user_input=Boston'):
-        sw.update_location(opener=lambda url: [][0])
-    assert sw.location.name == seanweather._DEFAULT_LOCATION_NAME
-    assert sw.user_input == seanweather._DEFAULT_USER_INPUT
-    assert sw.location.cache == cache
+# def test_update_location_default_cache(app, session):
+#     ''' The autocomplete API returns nothing and raises an IndexError. But there is
+#         an entry for the default Location in the db, so it returns that (with its cache)
+#     '''
+#     sw = seanweather.SeanWeather()
+#     sw.previous = seanweather.CookieData(units='F', user_input='', num_hours=0)
+#     cache = 'old weather data'
+#     _add_lookup(session, user_input='New York', url=seanweather._DEFAULT_LOCATION_URL,
+#         name=seanweather._DEFAULT_LOCATION_NAME, cache=cache)
+#     with app.test_request_context('?user_input=Boston'):
+#         sw.update_location(opener=lambda url: [][0])
+#     assert sw.location.name == seanweather._DEFAULT_LOCATION_NAME
+#     assert sw.user_input == seanweather._DEFAULT_USER_INPUT
+#     assert sw.location.cache == cache
 
 
 ########## SeanWeather.update_units ##############
@@ -217,13 +217,13 @@ def test_update_num_hours_good_request(app):
 
 ########## SeanWeather.update_weather_data ##############
 
-def test_update_weather_data_cached(session):
-    sw = seanweather.SeanWeather()
-    weather_data = [dict(date=0, icon='', icon_pos=100, temp='100', pop='0',
-                         feel='100', temp_c='35', feel_c='35')]*100
-    sw.location = Location('url', name='NYC', cache=json.dumps(weather_data))
-    sw.update_weather_data(weather_getter=lambda url, api_key: [])
-    assert sw.weather_data == weather_data
+# def test_update_weather_data_cached(session):
+#     sw = seanweather.SeanWeather()
+#     weather_data = [dict(date=0, icon='', icon_pos=100, temp='100', pop='0',
+#                          feel='100', temp_c='35', feel_c='35')]*100
+#     sw.location = Location('url', name='NYC', cache=json.dumps(weather_data))
+#     sw.update_weather_data(weather_getter=lambda url, api_key: [])
+#     assert sw.weather_data == weather_data
 
 def test_update_weather_data_not_cached_empty_response(session):
     sw = seanweather.SeanWeather()
