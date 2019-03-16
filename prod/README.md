@@ -2,7 +2,7 @@ I'm using nginx, uwsgi, and systemd.
 
 The nginx config file goes here `/etc/nginx/sites-available/myweather.conf`
 
-The uwsgi config file goes here `/etc/uwsgi.ini`
+The uwsgi config file goes here `/etc/uwsgi/apps-enabled/uwsgi.ini`
 
 For the systemd config file `/etc/systemd/system/uwsgi.service`, update these two lines appropriately:
 
