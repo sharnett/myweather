@@ -19,7 +19,7 @@ else:
     from email_credentials import email_credentials
     mail_handler = TlsSMTPHandler(*email_credentials())
     mail_handler.setLevel(logging.ERROR)
-    extra_handlers.append(mail_handler)
+    handlers.append(mail_handler)
 
 log = logging.getLogger('seanweather')
 log.setLevel(logging.DEBUG)
