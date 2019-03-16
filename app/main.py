@@ -20,6 +20,7 @@ class Units(Enum):
         except KeyError:
             return default
 
+_NUM_POINTS_IN_DAY = 8
 _DEFAULT_NUM_HOURS = 24
 _DEFAULT_USER_INPUT = '10027'
 _DEFAULT_LOCATION_URL = '/q/zmw:10027.1.99999'
@@ -153,7 +154,7 @@ class SeanWeather(object):
             self.current_temp, self.max_temp, self.min_temp, self.icon = '', '', '', ''
             return
         temp_key = 'temp_c' if self.units == Units.C else 'temp'
-        temps = [int(round(float(weather_day[temp_key]))) for weather_day in self.weather_data[:24]]
+        temps = [int(round(float(weather_day[temp_key]))) for weather_day in self.weather_data[:_NUM_POINTS_IN_DAY]]
         self.current_temp, self.max_temp, self.min_temp, self.icon = (
             temps[0], max(temps), min(temps), self.weather_data[0].get('icon'))
 
