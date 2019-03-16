@@ -10,6 +10,7 @@ DEBUG = True if SECRET_KEY == 'development' else False
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))  
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'db.db')
 
+handlers = []
 if DEBUG:
     werkzeug_logger = logging.getLogger('werkzeug')
     werkzeug_logger.setLevel(logging.INFO)
@@ -18,7 +19,7 @@ else:
     from email_credentials import email_credentials
     mail_handler = TlsSMTPHandler(*email_credentials())
     mail_handler.setLevel(logging.ERROR)
-    app.logger.addHandler(mail_handler)
+    extra_handlers.append(mail_handler)
 
 log = logging.getLogger('seanweather')
 log.setLevel(logging.DEBUG)
@@ -27,4 +28,6 @@ fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
-log.addHandler(fh)
+handlers.append(fh)
+for h in handlers:
+	log.addHandler(h)
