@@ -23,16 +23,22 @@ def send_mail(data):
 
 
 def gather_data(cur):
-    query = ('select count(*) as c, name '
-             'from lookup group by name order by c desc')
-    return ('\n'.join('{:>3} {}'
+    query = '''
+select
+  count(*) as c,
+  location_name as name,
+  location_country as country,
+  location_id as id
+from lookup
+group by name, country, id
+order by c desc
+'''
+    return ('\n'.join('{:>3} {}, {}, {}'
             .format(*result) for result in cur.execute(query)))
 
 
 def clean_up(cur):
     cur.execute('delete from lookup')
-    cur.execute('update location set cache="" '
-                'where julianday(last_updated) < julianday()-1')
 
 if __name__ == '__main__':
     directory = dirname(abspath(__file__))

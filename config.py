@@ -30,4 +30,4 @@ formatter = logging.Formatter(
 fh.setFormatter(formatter)
 handlers.append(fh)
 for h in handlers:
-	log.addHandler(h)
+    log.addHandler(h)

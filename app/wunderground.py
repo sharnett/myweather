@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+from collections import namedtuple
 import json
 import logging
 import re
@@ -10,44 +12,32 @@ import time
 logging.basicConfig()
 log = logging.getLogger(__name__)
 
+Location = namedtuple('Location', ['location_id', 'name', 'country'])
+
 _ICON_URL = 'http://openweathermap.org/img/w/%s.png'
 
 # Hack: this controls the y-position of the icons
 _MAX_POP = 10
 
-def autocomplete_user_input(user_input, opener=urlopen):
-    ''' Takes contents of 'enter zip code or city' field and gives it to the
-    wunderground autocomplete API. Returns the url and name of the top
-    result, e.g.
 
-    '/q/zmw:10027.1.99999', '10027 - New York, NY',
-    '''
-    url = ('http://autocomplete.wunderground.com/aq?query=%s'
-           % urllib.quote(user_input.encode('utf-8')))
-    response = json.load(opener(url))
-    # will raise an IndexError if RESULTS is empty
-    top_result = response['RESULTS'][0]
-    return top_result['l'], top_result['name']
+def weather_for_user_input(user_input, api_key):
+    return _parse_json(_json_for_user_input(user_input, api_key))
 
 
-def weather_for_location(location, api_key):
-    return _parse_json(_json_for_location(location, api_key))
-
-
-def _json_for_location(location, api_key, opener=urlopen):
+def _json_for_user_input(user_input, api_key, opener=urlopen):
     if api_key == 'development':
         logging.error('You need to set OPENWEATHERMAP_KEY in your environment')
         return {}
     base_url = (
-        'http://api.openweathermap.org/data/2.5/forecast?{param}={location}&APPID={key}')
-    param = 'zip' if re.match(r'\d\d\d\d\d', location) else 'q'
-    url = base_url.format(param=param, key=api_key, location=location)
+        'http://api.openweathermap.org/data/2.5/forecast?{param}={user_input}&APPID={key}')
+    param = 'zip' if re.match(r'\d\d\d\d\d', user_input) else 'q'
+    url = base_url.format(param=param, key=api_key, user_input=user_input)
     for i in range(3):
         try:
             return json.load(opener(url))
         except URLError:
             time.sleep(i)
-    raise URLError('urlopen timeout max retries for %s=%s' % (param, location))
+    raise URLError('urlopen timeout max retries for %s=%s' % (param, user_input))
 
 
 def _parse_json(json_data):
@@ -55,7 +45,9 @@ def _parse_json(json_data):
         only the data we care about.
     '''
 
-    if 'list' not in json_data or not json_data['list']:
+    if ('list' not in json_data
+            or not json_data['list']
+            or 'city' not in json_data):
         logging.error('json data is ill-formed')
         return []
 
@@ -93,7 +85,12 @@ def _parse_json(json_data):
             temp_c=str(int(round(c))),
             feel_c=str(int(round(heat_index_c))))
 
-    return [get_dict(row) for row in json_data['list']]
+    weather_data =  [get_dict(row) for row in json_data['list']]
+
+    city = json_data['city']
+    location = Location(city['id'], city['name'], city['country'])
+
+    return weather_data, location
 
 
 if __name__ == "__main__":

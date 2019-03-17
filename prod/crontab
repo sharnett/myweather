@@ -1,2 +1,1 @@
-0,30 * * * * . /home/sean/.profile; /home/sean/myweather/auto_fetch_data.py
 59 0 * * * . /home/sean/.profile; /home/sean/myweather/email_report.py

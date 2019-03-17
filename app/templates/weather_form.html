@@ -43,7 +43,7 @@
         </span>
   	  </div>
       <div id="summary" class="cyan lighten-5 z-depth-1">
-        <span id="location"> {{ sw.location.name }} </span>
+          <span id="location"> {{ sw.location.name }}, {{ sw.location.country }} </span>
         <span id="current"> {{ sw.current_temp }}&deg; <a href="#" id="units">{{ sw.units.name }}</a> <img id="currentimg" src={{ sw.icon | safe }} /> </span>
         <span id="high">{{ sw.max_temp }}&deg;</span>
         <span id="temp_divide">/</span>

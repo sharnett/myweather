@@ -16,9 +16,7 @@ Environment=SECRET_KEY=your_secret_key
 Environment=OPENWEATHERMAP_KEY=your_api_key
 ```
 
-The file `crontab` is used to regularly refresh the data for a few locations
-and to send a daily report. It needs you to have a `.profile` file in your
-home directory where you set `export OPENWEATHERMAP_KEY="your_api_key"`.
+The file `crontab` is used to to send a daily report.
 
 You may need to run these from time to time:
 

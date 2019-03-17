@@ -7,8 +7,8 @@ from urllib2 import urlopen
 
 from app import app, db
 from config import log, API_KEY
-from database import Location, Lookup
-from wunderground import weather_for_location, autocomplete_user_input
+from database import Lookup
+from wunderground import weather_for_user_input, Location
 
 class Units(Enum):
     F = 1
@@ -20,21 +20,20 @@ class Units(Enum):
         except KeyError:
             return default
 
+CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
+
 _NUM_POINTS_IN_DAY = 8
 _DEFAULT_NUM_HOURS = 24
-_DEFAULT_USER_INPUT = '10027'
-_DEFAULT_LOCATION_URL = '/q/zmw:10027.1.99999'
-_DEFAULT_LOCATION_NAME = '10027 -- New York, NY'
-_DEFAULT_LOCATION = Location(_DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME)
+_DEFAULT_USER_INPUT = 'New York'
+_DEFAULT_LOCATION = Location(5128581, 'New York', 'US')
 _DEFAULT_UNITS = Units.F
-CookieData = namedtuple('CookieData', ['units', 'user_input', 'num_hours'])
 _DEFAULT_COOKIE = CookieData(Units.F, _DEFAULT_USER_INPUT, _DEFAULT_NUM_HOURS)
 
 
 class SeanWeather(object):
     def __init__(self):
         self.data_string = ''
-        self.location = None
+        self.location = _DEFAULT_LOCATION
         self.user_input = _DEFAULT_USER_INPUT
         self.num_hours = _DEFAULT_NUM_HOURS
         self.current_temp = ''
@@ -42,14 +41,13 @@ class SeanWeather(object):
         self.min_temp = ''
         self.icon = ''
         self.units = _DEFAULT_UNITS
-        self.previous = None
+        self.previous = _DEFAULT_COOKIE
         self.weather_data = ''
 
     def update(self):
         log.info('STARTING')
         self.previous = CookieData(*session.get('sw2', _DEFAULT_COOKIE))
         self.update_units()
-        self.update_location()
         self.update_num_hours()
         self.update_weather_data()
         self.update_current_conditions()
@@ -64,57 +62,6 @@ class SeanWeather(object):
         self.units = Units.get(request_units, self.units)
         log.info('new units: %s', self.units)
 
-    def update_location(self, opener=urlopen):
-        ''' Get the Location corresponding to the user input
-
-        Locations are keyed by url and cache their weather data, which we want to
-        use if we can.
-
-        First, we look for the user_input in the Lookup table. If there was a
-        previous lookup within the last seven days, we return the corresponding
-        location.
-
-        If the user input is not in the Lookup table, we use the autocomplete API
-        to get a url and name for the user input. If the API fails, we use the
-        default url and name, and replace the user_input with the default so we
-        don't cache it.
-
-        If the url exists in the Location table, we return that location. Otherwise,
-        we create and return a new Location from the url and name.
-        '''
-        self.user_input = request.args.get('user_input',
-                                           self.previous.user_input)
-
-        self.location = Location(self.user_input, self.user_input)
-        log.info('%s', self.location)
-        # last_lookup = (Lookup.query.filter_by(user_input=self.user_input)
-        #                .order_by(Lookup.date.desc()).first())
-        # log.info('db result for most recent lookup of this location: %s', last_lookup)
-        # if (last_lookup is not None and
-        #         (datetime.now()-last_lookup.date).seconds < 604800):  # 7 days
-        #     log.info('got location info from the cache of a previous lookup')
-        #     self.location = last_lookup.location
-        #     return
-        # # No recent lookups for this user input, so check the autocomplete API
-        # try:
-        #     url, name = autocomplete_user_input(self.user_input, opener=opener)
-        #     log.info('got location info from autocomplete API:%s -> %s, %s',
-        #              self.user_input, url, name)
-        # # That didn't work, so just use the default url and name
-        # except IndexError, KeyError:
-        #     flash('I didnt like that, please try another city or zipcode')
-        #     log.warning('%s failed. Using %s', self.user_input, _DEFAULT_USER_INPUT)
-        #     url, name = _DEFAULT_LOCATION_URL, _DEFAULT_LOCATION_NAME
-        #     self.user_input = _DEFAULT_USER_INPUT
-        # # Now look for the url in the Location table
-        # self.location = Location.query.get(url)
-        # if self.location is None:
-        #     log.info('no info for that location, creating a new entry')
-        #     self.location = Location(url, name)
-        # else:
-        #     log.info('already have info for that location, reusing it')
-        # log.info('%s', self.location)
-
     def update_num_hours(self):
         try:
             self.num_hours = int(request.args.get('num_hours',
@@ -125,27 +72,17 @@ class SeanWeather(object):
             log.error('bad number of hours. request: %s, prev: %s',
                       request.args.get('num_hours'), self.previous.num_hours)
             self.num_hours = _DEFAULT_NUM_HOURS
+        log.info('num hours: %s', self.num_hours)
 
-    def update_weather_data(self, weather_getter=weather_for_location):
-        if False:
-        # if self.location.cache and self._was_recently_updated():
-            log.info('weather for %s was recently cached, reusing',
-                     self.location.name)
-        else:
-            num_secs = (datetime.now() - self.location.last_updated).seconds
-            log.info('%d chars in cache, %ds since last update'
-                     % (len(self.location.cache), num_secs))
-            log.info('using weather API for %s', self.location.name)
-            wd = weather_getter(self.user_input, API_KEY)
-            self.location.cache = json.dumps(wd)
-            if wd:
-                self.location.last_updated = datetime.now()
-            else:
-                log.warning("didn't get any results from weather API")
-        self.location = db.session.merge(self.location)
+    def update_weather_data(self, weather_getter=weather_for_user_input):
+        self.user_input = request.args.get('user_input',
+                                           self.previous.user_input)
+        log.info('using weather API for %s', self.user_input)
+        self.weather_data, self.location = weather_getter(self.user_input, API_KEY)
+        if not self.weather_data:
+            log.warning("didn't get any results from weather API")
         db.session.add(Lookup(self.user_input, self.location))
         db.session.commit()
-        self.weather_data = json.loads(self.location.cache)
         self.data_string = jsonify(self.weather_data[:(self.num_hours / 3)])
 
     def update_current_conditions(self):
@@ -157,10 +94,6 @@ class SeanWeather(object):
         temps = [int(round(float(weather_day[temp_key]))) for weather_day in self.weather_data[:_NUM_POINTS_IN_DAY]]
         self.current_temp, self.max_temp, self.min_temp, self.icon = (
             temps[0], max(temps), min(temps), self.weather_data[0].get('icon'))
-
-    def _was_recently_updated(self, max_seconds=2700):
-        return ((datetime.now() - self.location.last_updated).seconds <=
-                max_seconds)
 
 
 @app.before_request
@@ -206,10 +139,8 @@ def fake():
                 'icon': u'http://icons.wxug.com/i/c/k/nt_clear.gif'}]
     sw.data_string = jsonify(sw.weather_data)
     sw.icon = 'http://icons.wxug.com/i/c/k/nt_clear.gif'
-    sw.location = Location('', name='10027 -- New York, NY')
     sw.user_input = 'chilled'
-    sw.num_hours = 24
-    sw.current_temp, sw.max_temp, sw.min_temp = 75, 80, 65
+    sw.update_current_conditions()
     log.info('FINISHED with %s -- fake', sw.user_input)
     return render_template('weather_form.html', sw=sw)
 
