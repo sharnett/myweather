@@ -10,10 +10,11 @@ function weather() {
     // category                
     var categoryAxis = chart.categoryAxis;
     categoryAxis.parseDates = true; 
-    categoryAxis.minPeriod = "hh"; 
+    categoryAxis.minPeriod = "3hh";
+    categoryAxis.equalSpacing = true;
     categoryAxis.dashLength = 4;
     categoryAxis.gridAlpha = .15;
-    categoryAxis.dateFormats = [{period: "DD", format: "EEE M/D"}, {period: "hh", format: "LA"}]
+    categoryAxis.dateFormats = [{period: "DD", format: "EEE M/D"}, {period: "hh", format: "LA"}];
 
     // temperature value axis
     var tempAxis = new AmCharts.ValueAxis();
