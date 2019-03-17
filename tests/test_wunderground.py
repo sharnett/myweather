@@ -19,7 +19,7 @@ fake_json = {
                     u'temp_max': 282.445,
                     u'temp_min': 282.445},
                 u'rain': {},
-                u'weather': [{u'icon': u'fake_icon',}]},
+                u'weather': [{u'icon': u'10d',}]},
             {
                 u'dt': 1552949900,
                 u'main': {
@@ -28,16 +28,16 @@ fake_json = {
                     u'temp_max': 282.445,
                     u'temp_min': 282.445},
                 u'rain': {u'3h': 0.01},
-                u'weather': [{u'icon': u'fake_icon',}]},
+                u'weather': [{u'icon': u'13n',}]},
             ]
         }
 
 def test_parse_json():
     actual = wunderground._parse_json(fake_json)
     expected_location = wunderground.Location(5128581, 'New York', 'US')
-    expected1 = dict(date=1552942800000, icon=u'http://openweathermap.org/img/w/fake_icon.png', icon_pos=10,
+    expected1 = dict(date=1552942800000, icon='/static/icons/rain.gif', icon_pos=10,
                      temp='67', pop='0.0', feel='67', temp_c='19', feel_c='19')
-    expected2 = dict(date=1552949900000, icon=u'http://openweathermap.org/img/w/fake_icon.png', icon_pos=10,
+    expected2 = dict(date=1552949900000, icon='/static/icons/snow.gif', icon_pos=10,
                      temp='72', pop='0.0', feel='72', temp_c='22', feel_c='22')
     assert actual == ([expected1, expected2], expected_location)
 

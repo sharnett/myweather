@@ -68,20 +68,27 @@ def _parse_json(json_data):
         rain = row['rain'].get('3h', 0.) if 'rain' in row else 0.
         snow = row['snow'].get('3h', 0.) if 'snow' in row else 0.
         precipitation = rain + snow
+        wind_mps = row['wind'].get('speed', 0.) if 'wind' in row else 0.
+        wind_mph = 2.23694 * wind_mps
 
-        if f < 80 or rh < 40:
-            heat_index = f
+        if f <= 50 and wind_mph >= 3: # wind chill
+            feel = (35.74
+                    + 0.6215 * f
+                    - 35.75 * wind_mph**0.16
+                    + 0.4275 * f * wind_mph**0.16)
+        elif f >= 80 and rh >= 40: # heat index
+            feel = (-42.379
+                    + 2.04901523 * f
+                    + 10.14333127 * rh
+                    - 0.22475541 * f * rh
+                    - 6.83783e-3 * f**2
+                    - 5.481717e-2 * rh**2
+                    + 1.22874e-3 * f**2 * rh
+                    + 8.5282e-4 * f * rh**2
+                    - 1.99e-6 * f**2 * rh**2)
         else:
-            heat_index = (-42.379
-                          + 2.04901523 * f
-                          + 10.14333127 * rh
-                          - 0.22475541 * f * rh
-                          - 6.83783e-3 * f**2
-                          - 5.481717e-2 * rh**2
-                          + 1.22874e-3 * f**2 * rh
-                          + 8.5282e-4 * f * rh**2
-                          - 1.99e-6 * f**2 * rh**2)
-        heat_index_c = (heat_index - 32) * 5 / 9
+            feel = f
+        feel_c = (feel - 32) * 5 / 9
         icon_type = _ICON_MAP[row['weather'][0]['icon']]
         icon = '/static/icons/%s.gif' % icon_type
 
@@ -92,9 +99,9 @@ def _parse_json(json_data):
             temp=str(int(round(f))), # temperature in Fahrenheit
             # mm rain over three hour window
             pop='%.1f' % precipitation,
-            feel=str(int(round(heat_index))), # heat index
+            feel=str(int(round(feel))), # wind chill / heat index
             temp_c=str(int(round(c))),
-            feel_c=str(int(round(heat_index_c))))
+            feel_c=str(int(round(feel_c))))
 
     weather_data =  [get_dict(row) for row in json_data['list']]
 
