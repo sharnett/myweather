@@ -1,0 +1,14 @@
+[Unit]
+Description=uWSGI instance to serve myweather
+After=network.target
+
+[Service]
+User=sean
+Group=www-data
+WorkingDirectory=/home/sean/myweather/prod
+ExecStart=/usr/local/bin/uwsgi --ini myweather.ini
+Environment=SECRET_KEY=your_secret_key
+Environment=OPENWEATHERMAP_KEY=your_api_key
+
+[Install]
+WantedBy=multi-user.target

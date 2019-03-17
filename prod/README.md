@@ -1,18 +1,29 @@
-I'm using nginx, uwsgi, and systemd.
+I'm using nginx, uwsgi, and systemd according to the [Digital Ocean
+instructions for Flask on Ubuntu 18.04]
+(https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uswgi-and-nginx-on-ubuntu-18-04).
 
-The nginx config file goes here `/etc/nginx/sites-available/myweather.conf`
+The nginx config file goes here `/etc/nginx/sites-available/myweather.conf`.
+Update the lines with `root` and `uwsgi_pass` appropriately to match your
+directory structure.
 
-The uwsgi config file goes here `/etc/uwsgi/apps-enabled/uwsgi.ini`
+For the uwsgi config file `myweather.ini`, update the `chdir` line appropriately.
 
-For the systemd config file `/etc/systemd/system/uwsgi.service`, update these two lines appropriately:
+For the systemd config file `/etc/systemd/system/myweather.service`, update the
+`WorkingDirectory` line similarly. Also update these two lines:
 
 ```
 Environment=SECRET_KEY=your_secret_key
-Environment=WUNDERGROUND_KEY=your_api_key
+Environment=OPENWEATHERMAP_KEY=your_api_key
 ```
 
 The file `crontab` is used to regularly refresh the data for a few locations
 and to send a daily report. It needs you to have a `.profile` file in your
-home directory where you set `export WUNDERGROUND_KEY="your_api_key"`.
+home directory where you set `export OPENWEATHERMAP_KEY="your_api_key"`.
 
-You may need to run this from time to time: `sudo service uwsgi restart`
+You may need to run these from time to time:
+
+```
+sudo systemctl daemon-reload
+sudo systemctl restart myweather
+sudo systemctl restart nginx
+```
