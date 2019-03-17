@@ -3,12 +3,12 @@ from collections import namedtuple
 from datetime import datetime
 from enum import Enum
 from flask import flash, render_template, request, session
-from urllib2 import urlopen
+from future.moves.urllib.request import urlopen
 
 from app import app, db
 from config import log, API_KEY
-from database import Lookup
-from wunderground import weather_for_user_input, Location
+from app.database import Lookup
+from app.wunderground import weather_for_user_input, Location
 
 class Units(Enum):
     F = 1
@@ -83,7 +83,7 @@ class SeanWeather(object):
             log.warning("didn't get any results from weather API")
         db.session.add(Lookup(self.user_input, self.location))
         db.session.commit()
-        self.data_string = jsonify(self.weather_data[:(self.num_hours / 3)])
+        self.data_string = jsonify(self.weather_data[:int(self.num_hours / 3)])
 
     def update_current_conditions(self):
         ''' Update current temp and icon, and min/max temps over the next 24 hours '''

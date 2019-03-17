@@ -6,7 +6,9 @@ import logging
 import re
 import urllib
 from os import environ
-from urllib2 import urlopen, URLError
+from future.moves.urllib.request import urlopen
+from future.moves.urllib.error import URLError
+
 import time
 
 logging.basicConfig()

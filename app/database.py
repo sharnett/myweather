@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from app import db
-from wunderground import Location
+from app.wunderground import Location
 
 
 class Lookup(db.Model):

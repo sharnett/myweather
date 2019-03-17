@@ -30,7 +30,7 @@ select
   location_country as country,
   location_id as id
 from lookup
-group by name, country, id
+group by 2, 3, 4
 order by c desc
 '''
     return ('\n'.join('{:>3} {}, {}, {}'
