@@ -16,7 +16,14 @@ log = logging.getLogger(__name__)
 
 Location = namedtuple('Location', ['location_id', 'name', 'country'])
 
-_ICON_URL = 'http://openweathermap.org/img/w/%s.png'
+# https://openweathermap.org/weather-conditions and
+# https://www.wunderground.com/weather/api/d/docs?d=resources/icon-sets#icon_set__11
+_ICON_MAP = {'01d': 'clear', '02d': 'partlycloudy', '03d': 'cloudy',
+        '04d': 'cloudy', '09d': 'rain', '10d': 'rain', '11d': 'tstorms',
+        '13d': 'snow', '50d': 'fog',
+        '01n': 'nt_clear', '02n': 'nt_partlycloudy', '03n': 'cloudy',
+        '04n': 'cloudy', '09n': 'rain', '10n': 'rain', '11n': 'tstorms',
+        '13n': 'snow', '50n': 'fog'}
 
 # Hack: this controls the y-position of the icons
 _MAX_POP = 10
@@ -75,10 +82,12 @@ def _parse_json(json_data):
                           + 8.5282e-4 * f * rh**2
                           - 1.99e-6 * f**2 * rh**2)
         heat_index_c = (heat_index - 32) * 5 / 9
+        icon_type = _ICON_MAP[row['weather'][0]['icon']]
+        icon = '/static/icons/%s.gif' % icon_type
 
         return dict(
             date=row['dt']*1000,
-            icon=_ICON_URL % (row['weather'][0]['icon']),
+            icon=icon,
             icon_pos=_MAX_POP,
             temp=str(int(round(f))), # temperature in Fahrenheit
             # mm rain over three hour window
