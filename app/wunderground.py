@@ -55,6 +55,10 @@ def _parse_json(json_data):
         only the data we care about.
     '''
 
+    if 'list' not in json_data or not json_data['list']:
+        logging.error('json data is ill-formed')
+        return []
+
     def get_dict(row):
         k = row['main']['temp']
         f = k*9/5 - 459.67
