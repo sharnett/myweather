@@ -30,6 +30,7 @@ select
   location_country as country,
   location_id as id
 from lookup
+where date > datetime('now', '-1 days')
 group by 2, 3, 4
 order by c desc
 '''
@@ -37,14 +38,7 @@ order by c desc
             .format(*result) for result in cur.execute(query)))
 
 
-def clean_up(cur):
-    cur.execute('delete from lookup')
-
 if __name__ == '__main__':
     directory = dirname(abspath(__file__))
-    conn = connect(directory + '/db.db')
-    cur = conn.cursor()
-    send_mail(gather_data(cur))
-    clean_up(cur)
-    conn.commit()
-    conn.close()
+    with connect(directory + '/db.db') as con:
+        send_mail(gather_data(con.cursor()))
