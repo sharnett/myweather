@@ -58,7 +58,7 @@ def _parse_json(json_data):
             or not json_data['list']
             or 'city' not in json_data):
         logging.error('json data is ill-formed')
-        return []
+        return [], Location(0, '', '')
 
     def get_dict(row):
         k = row['main']['temp']
