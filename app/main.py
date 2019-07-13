@@ -4,6 +4,7 @@ from datetime import datetime
 from enum import Enum
 from flask import flash, render_template, request, session
 from future.moves.urllib.request import urlopen
+from future.moves.urllib.error import URLError
 
 from app import app, db
 from config import log, API_KEY
@@ -78,9 +79,12 @@ class SeanWeather(object):
         self.user_input = request.args.get('user_input',
                                            self.previous.user_input)
         log.info('using weather API for %s', self.user_input)
-        self.weather_data, self.location = weather_getter(self.user_input, API_KEY)
-        if not self.weather_data:
-            log.warning("didn't get any results from weather API")
+        try:
+            self.weather_data, self.location = weather_getter(self.user_input, API_KEY)
+        except URLError:
+            flash('seanweather didnt like the location, please try something else')
+            log.error("failed weather API call")
+            return
         db.session.add(Lookup(self.user_input, self.location))
         db.session.commit()
         self.data_string = jsonify(self.weather_data[:int(self.num_hours / 3)])

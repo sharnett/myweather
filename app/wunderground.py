@@ -13,6 +13,7 @@ import time
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 Location = namedtuple('Location', ['location_id', 'name', 'country'])
 
@@ -35,15 +36,18 @@ def weather_for_user_input(user_input, api_key):
 
 def _json_for_user_input(user_input, api_key, opener=urlopen):
     if api_key == 'development':
-        logging.error('You need to set OPENWEATHERMAP_KEY in your environment')
+        log.error('You need to set OPENWEATHERMAP_KEY in your environment')
         return {}
     base_url = (
         'http://api.openweathermap.org/data/2.5/forecast?{param}={user_input}&APPID={key}')
     param = 'zip' if re.match(r'\d\d\d\d\d', user_input) else 'q'
     url = base_url.format(param=param, key=api_key, user_input=user_input)
+    log.info(url)
     for i in range(3):
         try:
-            return json.load(opener(url))
+            response = json.load(opener(url))
+            log.info(str(response)[:100])
+            return response
         except URLError:
             time.sleep(i)
     raise URLError('urlopen timeout max retries for %s=%s' % (param, user_input))
@@ -57,7 +61,7 @@ def _parse_json(json_data):
     if ('list' not in json_data
             or not json_data['list']
             or 'city' not in json_data):
-        logging.error('json data is ill-formed')
+        log.error('json data is ill-formed')
         return [], Location(0, '', '')
 
     def get_dict(row):
@@ -106,7 +110,8 @@ def _parse_json(json_data):
     weather_data =  [get_dict(row) for row in json_data['list']]
 
     city = json_data['city']
-    location = Location(city['id'], city['name'], city['country'])
+    city_id = city.get('id', hash((city['coord']['lat'], city['coord']['lon'])))
+    location = Location(city_id, city['name'], city['country'])
 
     return weather_data, location
 
