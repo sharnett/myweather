@@ -4,6 +4,7 @@ from collections import namedtuple
 import json
 import logging
 import re
+import sys
 import time
 import urllib
 from os import environ
@@ -11,6 +12,9 @@ from future.moves.urllib.request import urlopen
 from future.moves.urllib.error import URLError
 
 from config import log
+
+class WundergroundError(Exception):
+    pass
 
 Location = namedtuple('Location', ['location_id', 'name', 'country'])
 
@@ -46,8 +50,12 @@ def _json_for_user_input(user_input, api_key, opener=urlopen):
             log.info(str(response)[:100])
             return response
         except URLError:
+            log.error('URLError on attempt %d' % (i+1))
             time.sleep(i)
-    raise URLError('urlopen timeout max retries for %s=%s' % (param, user_input))
+        except:
+            log.error(sys.exc_info())
+            raise WundergroundError('unknown API error for %s=%s' % (param, user_input))
+    raise WundergroundError('urlopen timeout max retries for %s=%s' % (param, user_input))
 
 
 def _parse_json(json_data):

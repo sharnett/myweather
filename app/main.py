@@ -4,12 +4,11 @@ from datetime import datetime
 from enum import Enum
 from flask import flash, render_template, request, session
 from future.moves.urllib.request import urlopen
-from future.moves.urllib.error import URLError
 
 from app import app, db
 from config import log, API_KEY
 from app.database import Lookup
-from app.wunderground import weather_for_user_input, Location
+from app.wunderground import weather_for_user_input, Location, WundergroundError
 
 class Units(Enum):
     F = 1
@@ -81,7 +80,7 @@ class SeanWeather(object):
         log.info('using weather API for %s', self.user_input)
         try:
             self.weather_data, self.location = weather_getter(self.user_input, API_KEY)
-        except URLError:
+        except WundergroundError:
             flash('seanweather didnt like the location, please try something else')
             log.error("failed weather API call")
             return
