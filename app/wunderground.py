@@ -4,16 +4,13 @@ from collections import namedtuple
 import json
 import logging
 import re
+import time
 import urllib
 from os import environ
 from future.moves.urllib.request import urlopen
 from future.moves.urllib.error import URLError
 
-import time
-
-logging.basicConfig()
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+from config import log
 
 Location = namedtuple('Location', ['location_id', 'name', 'country'])
 
@@ -41,7 +38,7 @@ def _json_for_user_input(user_input, api_key, opener=urlopen):
     base_url = (
         'http://api.openweathermap.org/data/2.5/forecast?{param}={user_input}&APPID={key}')
     param = 'zip' if re.match(r'\d\d\d\d\d', user_input) else 'q'
-    url = base_url.format(param=param, key=api_key, user_input=user_input)
+    url = base_url.format(param=param, key=api_key, user_input=urllib.quote(user_input))
     log.info(url)
     for i in range(3):
         try:
