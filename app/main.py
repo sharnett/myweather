@@ -2,6 +2,8 @@ import json
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum
+import traceback
+
 from flask import flash, render_template, request, session
 from future.moves.urllib.request import urlopen
 
@@ -82,7 +84,7 @@ class SeanWeather(object):
             self.weather_data, self.location = weather_getter(self.user_input, API_KEY)
         except WundergroundError:
             flash('seanweather didnt like the location, please try something else')
-            log.error("failed weather API call")
+            log.error(traceback.format_exc())
             return
         db.session.add(Lookup(self.user_input, self.location))
         db.session.commit()

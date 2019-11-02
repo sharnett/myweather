@@ -4,7 +4,6 @@ from collections import namedtuple
 import json
 import logging
 import re
-import sys
 import time
 import urllib
 from os import environ
@@ -43,17 +42,13 @@ def _json_for_user_input(user_input, api_key, opener=urlopen):
         'http://api.openweathermap.org/data/2.5/forecast?{param}={user_input}&APPID={key}')
     param = 'zip' if re.match(r'\d\d\d\d\d', user_input) else 'q'
     url = base_url.format(param=param, key=api_key, user_input=urllib.quote(user_input))
-    log.info(url)
     for i in range(3):
         try:
             response = json.load(opener(url))
-            log.info(str(response)[:100])
             return response
         except URLError:
-            log.error('URLError on attempt %d' % (i+1))
             time.sleep(i)
         except:
-            log.error(sys.exc_info())
             raise WundergroundError('unknown API error for %s=%s' % (param, user_input))
     raise WundergroundError('urlopen timeout max retries for %s=%s' % (param, user_input))
 
